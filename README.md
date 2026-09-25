@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão 2.7.3 — Sistema de Atualizações**
+**Versão 2.7.4 — Visual Refresh**
 
 CURIÓ é um catálogo pessoal para colecionadores de action figures, criado com foco em simplicidade, organização, controle de gastos e uma interface premium inspirada em apps da Apple.
 
@@ -156,3 +156,14 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Verificação periódica de atualização durante sessões longas.
 - Nova área em Configurações com versão instalada, status e verificação manual.
 - Interface do aviso alinhada ao Design System CURIÓ e adaptada ao mobile/dark mode.
+
+
+### V2.7.4 — Visual Refresh
+- Cards da coleção redesenhados com foco maior nas fotografias das figuras.
+- Coleção mobile em duas colunas, com layout compacto inspirado em uma estante digital.
+- Favoritos sobrepostos à fotografia com acabamento translúcido.
+- Estados vazios redesenhados com a identidade visual do CURIÓ e ações contextuais.
+- Ficha da figura refinada com dados de aquisição organizados em blocos visuais.
+- Ajustes de navegação, profundidade, contraste e hierarquia visual.
+- Base visual preparada para a nova iconografia consistente do CURIÓ.
+- Cache e sistema de atualização migrados para 2.7.4.
