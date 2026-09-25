@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão 2.6.2 — GitHub Pages**
+**Versão 2.7.0 — Estabilidade e PWA**
 
 CURIÓ é um catálogo pessoal para colecionadores de action figures, criado com foco em simplicidade, organização, controle de gastos e uma interface premium inspirada em apps da Apple.
 
@@ -106,3 +106,21 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Correção da colisão entre cards financeiros em larguras intermediárias.
 - Breakpoint dedicado para o resumo financeiro: quatro colunas em telas amplas e duas em telas médias/mobile.
 - Espaçamento do grid financeiro isolado das regras globais de cards para manter gaps consistentes.
+
+
+### V2.7.0 — Estabilidade e PWA
+- Aviso antes de descartar alterações não salvas no cadastro de figuras.
+- Detecção preventiva de figuras potencialmente duplicadas antes de salvar.
+- Confirmação visual após salvar uma figura ou edição.
+- Fluxo “Adquiri” corrigido: o item só é removido da Wishlist depois que a figura é salva com sucesso.
+- Ordenação da coleção por data, nome, preço e favoritos.
+- Botão para limpar filtros ativos.
+- Backup atualizado para o formato 2.7 e registro da data/hora do último backup nas Configurações.
+- Service Worker efetivamente registrado no HTTPS.
+- Estratégia de atualização do PWA revisada: navegação prioriza a versão online e usa o cache como fallback offline.
+- Limpeza automática de caches antigos e ativação imediata de novas versões.
+
+#### Em preparação para próximas revisões 2.7.x
+- Gerenciamento avançado de fotos: escolher capa, reorganizar e excluir imagens individualmente.
+- Refinamento da ficha de detalhes da figura.
+- Revisão visual adicional de estados vazios, modais e breakpoints.
