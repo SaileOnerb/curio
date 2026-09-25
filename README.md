@@ -93,3 +93,10 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Correção da sobreposição das ações sobre “Mostrar campos avançados”.
 - A barra inferior de navegação permanece visível ao fundo durante o cadastro de uma figura.
 - O modal de cadastro respeita o espaço da navegação inferior.
+
+
+### V2.6.3 — Financeiro mobile
+- Revisão do espaçamento dos cards de resumo financeiro.
+- Mais separação entre os blocos “Gastos — últimos 6 meses” e “Análise do período”.
+- Padding interno e altura mínima dos cards ajustados para melhorar a leitura no celular.
+- Grid financeiro mobile mantido em duas colunas, com fallback para uma coluna em telas muito estreitas.
