@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão 2.7.5 — Editor de Capa**
+**Versão 2.7.6 — PWA / Instalação**
 
 CURIÓ é um catálogo pessoal para colecionadores de action figures, criado com foco em simplicidade, organização, controle de gastos e uma interface premium inspirada em apps da Apple.
 
@@ -179,3 +179,13 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Figuras existentes podem reabrir o editor através de “Editar enquadramento”.
 - Dados do recorte ficam salvos junto ao exemplar no IndexedDB.
 - Cache e sistema de atualização migrados para 2.7.5.
+
+
+### V2.7.6 — PWA / Instalação
+- Manifesto PWA revisado com ID e escopo estáveis para o GitHub Pages.
+- Start URL explícita em /curio/.
+- Ícone maskable dedicado para melhor integração com launchers Android.
+- Tela de Configurações agora informa o estado de instalação do aplicativo.
+- Botão “Instalar CURIÓ” aparece quando o navegador disponibiliza o prompt nativo.
+- Detecção de execução em modo standalone e do evento appinstalled.
+- Service Worker atualizado para cache 2.7.6 e novo ícone PWA.
