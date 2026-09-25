@@ -1,21 +1,19 @@
 {
+  "id": "/curio/",
   "name": "CURIÓ — Personal Collection",
   "short_name": "CURIÓ",
-  "start_url": "./",
+  "description": "Seu catálogo pessoal de action figures.",
+  "start_url": "/curio/",
+  "scope": "/curio/",
   "display": "standalone",
-  "background_color": "#f5f5f7",
-  "theme_color": "#f5f5f7",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#111113",
   "lang": "pt-BR",
   "icons": [
-    {
-      "src": "icons/icon-192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "icons/icon-512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml"
-    }
+    {"src":"icons/icon-192.svg","sizes":"192x192","type":"image/svg+xml","purpose":"any"},
+    {"src":"icons/icon-512.svg","sizes":"512x512","type":"image/svg+xml","purpose":"any"},
+    {"src":"icons/icon-maskable.svg","sizes":"512x512","type":"image/svg+xml","purpose":"maskable"}
   ]
 }
