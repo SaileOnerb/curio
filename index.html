@@ -195,6 +195,23 @@ body.dark .toolbar input:focus,body.dark .toolbar select:focus,body.dark label i
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
+<style id="curio2721-mobile-collection-fix">
+/* 2.7.2.1 — correção de overflow da Coleção no mobile */
+@media(max-width:700px){
+ html,body{width:100%;max-width:100%;overflow-x:hidden}
+ .main,.view,#collection{width:100%;max-width:100%;min-width:0}
+ #collection .head{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:start!important;gap:18px!important}
+ #collection .head>div{min-width:0}
+ #collection .head h1,#collection .sub{max-width:100%;overflow-wrap:anywhere}
+ #collection .head .primary{width:max-content;max-width:100%}
+ #collection .toolbar{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:100%;max-width:100%;min-width:0;gap:10px!important;padding:10px!important}
+ #collection .toolbar>*{width:100%!important;max-width:100%!important;min-width:0!important;grid-column:1!important}
+ #collection .toolbar input,#collection .toolbar select{font-size:16px}
+ #collection #manageGroups,#collection #clearFilters{justify-content:center}
+ #collection .grid,#collectionGrid{width:100%;max-width:100%;min-width:0}
+ #collection .empty{width:100%;max-width:100%;padding:36px 18px}
+}
+</style>
 </head><body>
 <aside class="side"><div class="logo"><img class="brandIcon" src="./icons/icon-192.svg" alt=""><span class="brandCopy"><strong>CURIÓ</strong><small>Personal Collection · v2.7.2</small></span></div>
 <button class="nav on" data-v="home">⌂ Visão geral</button><button class="nav" data-v="collection">▦ Minha coleção</button><button class="nav" data-v="wishlist">♡ Wishlist</button><button class="nav" data-v="finance">◒ Financeiro</button>
