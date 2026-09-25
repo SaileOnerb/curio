@@ -138,8 +138,65 @@ body.dark .brandIcon{box-shadow:0 5px 18px rgba(0,0,0,.5)}
   .brandIcon{width:38px;height:38px;border-radius:10px}
 }
 </style>
+<style id="curio272-design-system">
+/* 2.7.2 — Design System CURIÓ */
+:root{
+ --curio-bg:#f5f5f7;--curio-surface:rgba(255,255,255,.88);--curio-surface-solid:#fff;
+ --curio-text:#1d1d1f;--curio-muted:#6e6e73;--curio-faint:#86868b;
+ --curio-line:rgba(0,0,0,.075);--curio-soft:#eeeef2;--curio-accent:#111113;
+ --curio-r-sm:10px;--curio-r-md:14px;--curio-r-lg:20px;--curio-r-xl:26px;
+ --curio-shadow:0 10px 32px rgba(0,0,0,.055);--curio-shadow-hover:0 16px 38px rgba(0,0,0,.09);
+ --curio-ease:cubic-bezier(.2,.8,.2,1)
+}
+body{background:var(--curio-bg);color:var(--curio-text);letter-spacing:-.005em}
+.main{padding-top:48px}
+.head{margin-bottom:32px}.head h1{font-weight:760;line-height:1.02}.sub{line-height:1.45;max-width:680px}
+.eyebrow{letter-spacing:1.55px;font-weight:800}
+.section{margin-top:38px}.section h2{font-weight:740;letter-spacing:-.5px}
+.primary,.secondary,.ghost,.mini,.nav,.mnav,.close,.fav{transition:transform .18s var(--curio-ease),background .18s ease,box-shadow .18s ease,opacity .18s ease}
+.primary{background:var(--curio-accent);border-radius:13px;min-height:42px;padding:10px 16px;box-shadow:0 5px 14px rgba(0,0,0,.11)}
+.secondary{border-radius:13px;min-height:42px;background:#eaeaee}.ghost{border-radius:13px}
+.primary:active,.secondary:active,.mini:active,.mnav:active{transform:scale(.97)}
+.stat,.panel,.item,.settingsBlock,.wishComposer{border-color:var(--curio-line)!important;box-shadow:var(--curio-shadow);transition:transform .22s var(--curio-ease),box-shadow .22s ease,border-color .22s ease}
+.stat,.panel,.item{border-radius:var(--curio-r-lg)}
+.item{background:var(--curio-surface-solid)}.info{padding:17px}.info h3{letter-spacing:-.25px;line-height:1.18}
+.pic{background:linear-gradient(145deg,#e9e9ed,#f8f8fa)}
+.pill,.tag{font-weight:700;letter-spacing:.01em}
+.toolbar{padding:12px;background:rgba(255,255,255,.62);border:1px solid var(--curio-line);border-radius:18px;box-shadow:0 5px 20px rgba(0,0,0,.025)}
+.toolbar input,.toolbar select,label input,label select,label textarea{min-height:42px;border-color:#d8d8dd;border-radius:12px;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
+.toolbar input:focus,.toolbar select:focus,label input:focus,label select:focus,label textarea:focus{border-color:#8e8e93;box-shadow:0 0 0 3px rgba(0,0,0,.055)}
+.box{border:1px solid rgba(255,255,255,.35);box-shadow:0 28px 80px rgba(0,0,0,.2);border-radius:var(--curio-r-xl)}
+.modal{background:rgba(0,0,0,.38);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.close{display:grid;place-items:center}.smart{border:1px solid var(--curio-line)}
+.empty{border:1px solid var(--curio-line);box-shadow:var(--curio-shadow);line-height:1.5}
+.mobile-nav{box-shadow:0 12px 38px rgba(0,0,0,.15)!important}
+body.dark{
+ --curio-bg:#000;--curio-surface:rgba(28,28,30,.88);--curio-surface-solid:#1c1c1e;
+ --curio-text:#f5f5f7;--curio-muted:#a1a1a6;--curio-faint:#8e8e93;
+ --curio-line:rgba(255,255,255,.09);--curio-soft:#2c2c2e;--curio-accent:#f5f5f7;
+ --curio-shadow:0 12px 34px rgba(0,0,0,.22);--curio-shadow-hover:0 18px 42px rgba(0,0,0,.32)
+}
+body.dark .primary{background:#f5f5f7;color:#111113;box-shadow:none}
+body.dark .secondary,body.dark .mini{background:#2c2c2e;color:#f5f5f7}
+body.dark .toolbar{background:rgba(28,28,30,.7);border-color:var(--curio-line)}
+body.dark .item,body.dark .stat,body.dark .panel,body.dark .empty{background:var(--curio-surface-solid)}
+body.dark .pic{background:linear-gradient(145deg,#242426,#151517)}
+body.dark .toolbar input:focus,body.dark .toolbar select:focus,body.dark label input:focus,body.dark label select:focus,body.dark label textarea:focus{border-color:#737378;box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+@media(hover:hover) and (pointer:fine){
+ .item:hover,.stat:hover{transform:translateY(-2px);box-shadow:var(--curio-shadow-hover)}
+ .primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.16)}
+ .secondary:hover,.mini:hover{filter:brightness(.97)}
+}
+@media(max-width:700px){
+ .main{padding-top:28px}.head{margin-bottom:24px}.section{margin-top:30px}
+ .toolbar{padding:10px;border-radius:16px}
+ .stat,.panel,.item{border-radius:18px}
+ .box{border-radius:24px 24px 0 0}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head><body>
-<aside class="side"><div class="logo"><img class="brandIcon" src="./icons/icon-192.svg" alt=""><span class="brandCopy"><strong>CURIÓ</strong><small>Personal Collection · v2.7.1</small></span></div>
+<aside class="side"><div class="logo"><img class="brandIcon" src="./icons/icon-192.svg" alt=""><span class="brandCopy"><strong>CURIÓ</strong><small>Personal Collection · v2.7.2</small></span></div>
 <button class="nav on" data-v="home">⌂ Visão geral</button><button class="nav" data-v="collection">▦ Minha coleção</button><button class="nav" data-v="wishlist">♡ Wishlist</button><button class="nav" data-v="finance">◒ Financeiro</button>
 <div class="bottom"><button class="nav" data-v="settings">⚙ Configurações</button></div></aside><main class="main">
 <section id="home" class="view on"><div class="head"><div><p class="eyebrow">COLEÇÃO PESSOAL</p><h1>Sua coleção.</h1><p class="sub">Um arquivo visual das peças que fazem parte do seu hobby.</p></div><button class="primary" onclick="openFigure()">＋ Adicionar figura</button></div><div id="homeStats" class="cards"></div><div class="section"><h2>Aquisições recentes</h2></div><div id="recent" class="grid"></div></section>
