@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão 2.7.2 — Design System CURIÓ**
+**Versão 2.7.3 — Sistema de Atualizações**
 
 CURIÓ é um catálogo pessoal para colecionadores de action figures, criado com foco em simplicidade, organização, controle de gastos e uma interface premium inspirada em apps da Apple.
 
@@ -146,3 +146,13 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Tema escuro alinhado ao mesmo sistema visual do tema claro.
 - Microinterações em desktop e mobile, respeitando a preferência de movimento reduzido do sistema.
 - Cache do PWA atualizado para 2.7.2.
+
+
+### V2.7.3 — Sistema de Atualizações
+- Detecção automática de uma nova versão pelo Service Worker.
+- Aviso visual dentro do CURIÓ quando uma atualização estiver pronta.
+- Ações “Agora não” e “Atualizar” sem apagar os dados locais da coleção.
+- Atualização aplicada pelo novo Service Worker seguida de recarregamento automático.
+- Verificação periódica de atualização durante sessões longas.
+- Nova área em Configurações com versão instalada, status e verificação manual.
+- Interface do aviso alinhada ao Design System CURIÓ e adaptada ao mobile/dark mode.
