@@ -100,3 +100,9 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Mais separação entre os blocos “Gastos — últimos 6 meses” e “Análise do período”.
 - Padding interno e altura mínima dos cards ajustados para melhorar a leitura no celular.
 - Grid financeiro mobile mantido em duas colunas, com fallback para uma coluna em telas muito estreitas.
+
+
+### V2.6.4 — Financeiro responsivo
+- Correção da colisão entre cards financeiros em larguras intermediárias.
+- Breakpoint dedicado para o resumo financeiro: quatro colunas em telas amplas e duas em telas médias/mobile.
+- Espaçamento do grid financeiro isolado das regras globais de cards para manter gaps consistentes.
