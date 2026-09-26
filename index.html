@@ -479,7 +479,7 @@ async function restoreSnapshot(id){let s=readSnapshots().find(x=>x.id===id);if(!
 function checkIntegrity({intentional=false}={}){let prev=readIntegrityCheckpoint(),now=integrityState(),prevTotal=(prev?.figures||0)+(prev?.wishlist||0)+(prev?.groups||0),nowTotal=now.figures+now.wishlist+now.groups,empty=nowTotal===0,largeDrop=prevTotal>=10&&nowTotal<prevTotal*.5;integrityWarning=!intentional&&!!(prev&&prevTotal>0&&(empty||largeDrop));if(!integrityWarning&&(nowTotal>0||intentional))writeIntegrityCheckpoint(true);return {prev,now,empty,largeDrop}}
 async function loadAll(opts={}){figures=await all("figures");wishlist=await all("wishlist");groups=await all("groups");let st=await all("settings");if(st[0])settings={...settings,...st[0]};makers=[...new Set([...Object.keys(profiles),...(settings.customMakers||[])])];let state=checkIntegrity(opts);applyTheme();render();renderSnapshots();renderHealthPanel();if(integrityWarning){let out=$("#recoveryResult"),p=state.prev,n=state.now;if(out)out.innerHTML=`<b>Alerta de integridade:</b> o armazenamento caiu de ${p.figures||0} para ${n.figures} figura(s), ${p.wishlist||0} para ${n.wishlist} Wishlist e ${p.groups||0} para ${n.groups} coleção(ões). O checkpoint saudável foi preservado. Evite novas alterações até verificar os dados ou restaurar um snapshot/backup.`}}
 function applyTheme(){let dark=!!settings.dark;document.documentElement.classList.toggle("dark",dark);document.body.classList.toggle("dark",dark);document.documentElement.style.colorScheme=dark?"dark":"light";try{localStorage.setItem("curio-theme-preference",dark?"dark":"light")}catch(e){}}
-$(".nav[data-v]").forEach(b=>b.onclick=()=>{$(".nav").forEach(x=>x.classList.remove("on"));b.classList.add("on");$(".view").forEach(x=>x.classList.remove("on"));$("#"+b.dataset.v).classList.add("on")});
+$(".nav[data-v]").forEach(b=>b.onclick=()=>{$(".nav").forEach(x=>x.classList.remove("on"));b.classList.add("on");$(".view").forEach(x=>x.classList.remove("on"));$("#"+b.dataset.v).classList.add("on");render()});
 const lineScales={
  "Hasbro":{"Marvel Universe":"3,75\""},
  "Storm Collectibles":{"Storm Arena":"1/12","1/6 Scale":"1/6"},
@@ -655,6 +655,7 @@ window.addEventListener("load",paintInstall);
    const v=qs("#"+id); if(v)v.classList.add("on");
    qsa(".nav[data-v]").forEach(b=>b.classList.toggle("on",b.dataset.v===id));
    qsa(".mnav").forEach(b=>b.classList.toggle("on",b.dataset.mv===id));
+   try{ if(typeof render==="function") render(); }catch(e){}
    window.scrollTo({top:0,behavior:"smooth"});
  }
  qsa(".mnav").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mv)));
