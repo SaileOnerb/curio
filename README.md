@@ -243,3 +243,12 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Exclusão em lote exige confirmação e oferece 4 segundos para desfazer, restaurando os registros completos.
 
 - No mobile, o modo de seleção em lote é ativado com toque longo (~500 ms) sobre uma figura; o botão Selecionar fica reservado ao desktop. Arrastar para rolar cancela o toque longo para evitar seleções acidentais.
+
+### Camada de segurança de dados — concluída (2.7.8)
+- Mantém até 3 snapshots locais automáticos antes de importações, exclusão total e restaurações.
+- Snapshots mostram data, versão e contagens e podem ser exportados ou restaurados; restaurar cria antes um snapshot do estado atual.
+- Importação valida o arquivo, cria snapshot antes de escrever e tenta rollback para o estado anterior se houver falha.
+- Backups antigos reconhecíveis podem omitir arrays e continuam compatíveis; backup totalmente vazio é rejeitado.
+- Checkpoint de integridade agora detecta banco vazio e quedas superiores a 50% quando havia ao menos 10 registros, preservando o último checkpoint saudável.
+- Exclusão total é marcada como intencional para não gerar falso alerta de integridade; o backup JSON externo continua obrigatório no fluxo de apagar tudo.
+- Snapshots locais protegem contra erros do app, mas não substituem backup externo porque podem ser removidos junto com os dados do site pelo navegador/sistema.
