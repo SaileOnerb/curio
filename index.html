@@ -385,6 +385,28 @@ box-sizing:border-box!important;
 .updateToast,#updateToast,#backupToast,#feedbackToast,#wishUndoToast,#figureUndoToast,#bulkUndoToast{left:10px!important;right:10px!important}
 .updateToast .updateToastActions{grid-template-columns:1fr!important}
 }
+</style><style id="curio278-toast-viewport-final">
+@media(max-width:700px),(pointer:coarse){
+body>.updateToast{
+position:fixed!important;
+left:max(14px,env(safe-area-inset-left))!important;
+right:max(14px,env(safe-area-inset-right))!important;
+bottom:calc(96px + env(safe-area-inset-bottom))!important;
+top:auto!important;
+width:auto!important;
+max-width:none!important;
+min-width:0!important;
+margin:0!important;
+box-sizing:border-box!important;
+transform:translate3d(0,calc(100% + 120px),0)!important;
+}
+body>.updateToast.on{transform:translate3d(0,0,0)!important}
+body>#updateToast,body>#backupToast{display:grid!important;grid-template-columns:40px minmax(0,1fr)!important;align-items:center!important;gap:10px!important;padding:14px!important}
+body>#updateToast img,body>#backupToast img{width:40px!important;height:40px!important}
+body>#updateToast .updateToastActions,body>#backupToast .updateToastActions{grid-column:1/-1!important;display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important;gap:8px!important}
+body>#updateToast .updateToastActions button,body>#backupToast .updateToastActions button{width:100%!important;min-width:0!important}
+}
+@media(max-width:360px){body>.updateToast{left:max(10px,env(safe-area-inset-left))!important;right:max(10px,env(safe-area-inset-right))!important}}
 </style></head><body><script id="curio-body-theme-boot">if(document.documentElement.classList.contains("dark"))document.body.classList.add("dark");document.body.classList.add("theme-ready");</script>
 <aside class="side"><div class="logo"><img class="brandIcon" src="./icons/icon-192.svg" alt=""><span class="brandCopy"><strong>CURIÓ</strong><small>Personal Collection · v2.7.8</small></span></div>
 <button class="nav on" data-v="home">⌂ Visão geral</button><button class="nav" data-v="collection">▦ Minha coleção</button><button class="nav" data-v="wishlist">♡ Wishlist</button><button class="nav" data-v="finance">◒ Financeiro</button>
