@@ -365,6 +365,26 @@ html,body{max-width:100%;overflow-x:hidden}.main,.view,.panel,.settingsBlock,.it
 #settings .snapshotZone{margin-top:18px!important;margin-bottom:22px!important}
 #settings .dangerZone{margin-top:0!important}
 }
+</style><style id="curio278-toast-mobile-repair">
+@media(max-width:700px){
+/* One positioning model for every floating notification. Avoid left:50% + fixed edges conflicts. */
+.updateToast,#updateToast,#backupToast,#feedbackToast,#wishUndoToast,#figureUndoToast,#bulkUndoToast{
+left:14px!important;right:14px!important;width:auto!important;max-width:none!important;
+bottom:calc(96px + var(--safe-bottom))!important;
+transform:translateY(160%)!important;margin:0!important;
+box-sizing:border-box!important;
+}
+.updateToast.on,#updateToast.on,#backupToast.on,#feedbackToast.on,#wishUndoToast.on,#figureUndoToast.on,#bulkUndoToast.on{transform:translateY(0)!important}
+.updateToast{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;align-items:center!important;gap:10px!important}
+.updateToast .updateToastCopy{min-width:0!important;padding:0!important}
+.updateToast .updateToastActions{grid-column:1/-1!important;width:100%!important;display:grid!important;grid-template-columns:repeat(auto-fit,minmax(110px,1fr))!important;gap:8px!important}
+.updateToast .updateToastActions button{width:100%!important;min-width:0!important;white-space:normal!important}
+.feedbackToast:not(:has(.updateToastActions)){grid-template-columns:auto minmax(0,1fr)!important}
+}
+@media(max-width:360px){
+.updateToast,#updateToast,#backupToast,#feedbackToast,#wishUndoToast,#figureUndoToast,#bulkUndoToast{left:10px!important;right:10px!important}
+.updateToast .updateToastActions{grid-template-columns:1fr!important}
+}
 </style></head><body>
 <aside class="side"><div class="logo"><img class="brandIcon" src="./icons/icon-192.svg" alt=""><span class="brandCopy"><strong>CURIÓ</strong><small>Personal Collection · v2.7.8</small></span></div>
 <button class="nav on" data-v="home">⌂ Visão geral</button><button class="nav" data-v="collection">▦ Minha coleção</button><button class="nav" data-v="wishlist">♡ Wishlist</button><button class="nav" data-v="finance">◒ Financeiro</button>
