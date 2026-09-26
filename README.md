@@ -259,3 +259,10 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Filtros, Wishlist, Financeiro, Configurações, formulários, modais, snapshots, toasts e seleção em lote receberam limites de largura e reorganização responsiva.
 - Em 360 px ou menos, ações críticas e backup passam a empilhar quando necessário; tablet recebe grade e espaçamento intermediários.
 - Inputs mobile mantêm tamanho adequado para toque e prevenção de zoom automático.
+
+### Painel Saúde dos dados (2.7.8)
+- Novo painel permanente em Configurações > Dados e backup com resumo de figuras, Wishlist, coleções e snapshots.
+- Exibe último backup, alterações pendentes, versão e data do checkpoint de integridade.
+- Usa Storage API quando disponível para informar persistência e estimativa de uso/quota do armazenamento.
+- Estado geral indica Saudável ou Atenção conforme alerta de integridade e situação do backup.
+- Botão Atualizar diagnóstico refaz as leituras sem alterar os dados da coleção.
