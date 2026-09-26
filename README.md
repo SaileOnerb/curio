@@ -50,6 +50,10 @@ Ajuste tema claro ou escuro, privacidade dos valores da Home, metas, fabricantes
 
 A versão publicada é um app estático em HTML, CSS e JavaScript, hospedado no GitHub Pages. A navegação seletiva e a poda de carregamento das capas foram validadas no aparelho em 26/09/2026. O foco atual é estabilidade e refinamento. Sincronização entre dispositivos, extração automática dos links da Wishlist, afiliados e Price Tracker não fazem parte da versão 2.7.8.
 
+### Preparação da versão online
+
+O [plano de migração](docs/online-migration.md) e a [migração inicial do banco](supabase/migrations/20260926000000_online_foundation.sql) preparam contas, dados separados por usuário e fotos privadas. Esta etapa ainda não oferece login nem sincronização na versão publicada; a coleção existente continua no navegador. A instalação do banco exige um projeto Supabase configurado e testes de isolamento antes de conectar o aplicativo.
+
 ## Changelog
 ### V1 — Marvel Legends Collection
 - Primeira versão local.
