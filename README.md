@@ -225,6 +225,8 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 
 ### Wishlist — refinamentos 2.7.8
 - Exclusão agora pede confirmação em modal do CURIÓ.
-- Após excluir, há 8 segundos para desfazer e restaurar o item completo.
+- Após excluir, há 4 segundos para desfazer e restaurar o item completo.
 - O modal de edição mostra a loja detectada pelo link em tempo real.
 - “Marcar como adquirida” também está disponível dentro da edição e abre o cadastro da figura com nome, preço e loja preenchidos.
+
+- Exclusão de figuras da coleção principal agora usa confirmação do CURIÓ e oferece 4 segundos para desfazer, restaurando o registro completo.
