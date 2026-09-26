@@ -326,6 +326,36 @@ html,body{max-width:100%;overflow-x:hidden}.main,.view,.panel,.settingsBlock,.it
 .main{padding-left:12px;padding-right:12px}.cards{gap:8px}.stat{padding:13px}.stat small{font-size:11px}.stat .big{font-size:20px}.panel{padding:14px}.info{padding:13px}.box,.box.small{padding:18px 14px}.formactions{grid-template-columns:1fr}.backupActionsRow>div,.backupActions{grid-template-columns:1fr}.bulkActions{grid-template-columns:1fr 1fr}.bulkBar{left:10px!important;right:10px!important;max-width:calc(100vw - 20px)!important}.updateToast{left:10px!important;right:10px!important;max-width:calc(100vw - 20px)!important}
 }
 @media(min-width:701px) and (max-width:900px){.side{width:210px}.main{margin-left:210px;padding:32px 24px}.head h1{font-size:36px}.cards,.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.settingsShell{max-width:100%}}
+</style><style id="curio278-settings-mobile-repair">
+@media(max-width:700px){
+#settings .settingsShell{display:grid!important;gap:14px!important;width:100%!important}
+#settings .settingsBlock{width:100%!important;min-height:0!important;height:auto!important;overflow:hidden!important}
+#settings .settingTitle{padding:18px 18px 12px!important}
+#settings .settingTitle h3{font-size:18px!important}
+#settings .settingRow{min-height:0!important;height:auto!important;padding:15px 18px!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:14px!important}
+#settings .settingRow>span:first-child{flex:1 1 auto!important;min-width:0!important}
+#settings .settingRow>.choiceSwitch,#settings .settingRow>.backupSwitch,#settings .settingRow>.backupHealth,#settings .settingRow>span:last-child{flex:0 0 auto!important;margin:0!important}
+#settings .choiceSwitch,#settings .backupSwitch{align-self:center!important}
+#settings .settingGrid{padding:4px 18px 16px!important;grid-template-columns:1fr!important}
+#settings .settingFooter{padding:0 18px 18px!important;justify-content:flex-end!important}
+#settings .settingFooter button{width:auto!important}
+#settings .settingRow:has(#newMaker){display:grid!important;grid-template-columns:1fr!important;align-items:stretch!important}
+#settings .settingRow:has(#newMaker)>div{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;width:100%!important;gap:8px!important}
+#settings #newMaker{width:100%!important;min-width:0!important}
+#settings #makerList{padding:0 18px 14px!important}
+#settings .backupActionsRow{display:grid!important;grid-template-columns:1fr!important;align-items:stretch!important}
+#settings .backupActionsRow .backupActions{width:100%!important}
+#settings .backupStatusRow{align-items:center!important}
+#settings .recoveryZone,#settings .snapshotZone,#settings .dangerZone{margin-left:14px!important;margin-right:14px!important}
+#settings .dangerButton{max-width:100%!important}
+#settings .settingRow:has(#settingsManageGroups){align-items:center!important}
+#settings .settingRow:has(#settingsManageGroups) button{width:auto!important}
+}
+@media(max-width:360px){
+#settings .settingRow{padding-left:14px!important;padding-right:14px!important}
+#settings .settingRow:has(#newMaker)>div{grid-template-columns:1fr!important}
+#settings #addMaker{width:100%!important}
+}
 </style></head><body>
 <aside class="side"><div class="logo"><img class="brandIcon" src="./icons/icon-192.svg" alt=""><span class="brandCopy"><strong>CURIÓ</strong><small>Personal Collection · v2.7.8</small></span></div>
 <button class="nav on" data-v="home">⌂ Visão geral</button><button class="nav" data-v="collection">▦ Minha coleção</button><button class="nav" data-v="wishlist">♡ Wishlist</button><button class="nav" data-v="finance">◒ Financeiro</button>
