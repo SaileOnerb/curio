@@ -189,3 +189,21 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Botão “Instalar CURIÓ” aparece quando o navegador disponibiliza o prompt nativo.
 - Detecção de execução em modo standalone e do evento appinstalled.
 - Service Worker atualizado para cache 2.7.6 e novo ícone PWA.
+
+### V2.7.7 — Catálogo & Privacidade
+- Expansão do catálogo com Blokees, Funko, Diamond Select Toys, Storm Collectibles, Jada Toys e Super7.
+- Bandai Spirits, McFarlane Toys, DC Direct, DC Collectibles e Mattel receberam novas linhas relevantes.
+- Hasbro ganhou a linha Marvel Universe.
+- Escala automática por linha quando o padrão é confiável; linhas de escala variável permanecem livres para preenchimento manual.
+- Filtro por coleção priorizado e corrigido no mobile, permitindo visualizar somente uma coleção criada pelo usuário.
+- Campo de Tags removido do cadastro; dados antigos permanecem preservados para compatibilidade.
+- Coleções passam a aparecer na ficha da figura no lugar das Tags legadas.
+- Privacidade financeira na Home: opção para ocultar Total gasto e Valor da coleção.
+- Área de backup refinada no mobile.
+- Fluxo “Apagar todos os dados” com dupla confirmação e exigência de digitar APAGAR.
+- Exportação de backup disponível dentro do próprio fluxo de exclusão, sem precisar sair do modal.
+- Persistência do novo enquadramento da capa reforçada no IndexedDB.
+- Proteção contra descarte de outras alterações do formulário preservada após salvar um novo enquadramento.
+- Revisão do fluxo de atualização da PWA: a nova versão aguarda a confirmação do usuário antes de assumir o controle.
+- Cache, versão instalada e sistema de atualização migrados oficialmente para 2.7.7.
+
