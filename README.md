@@ -207,3 +207,11 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Revisão do fluxo de atualização da PWA: a nova versão aguarda a confirmação do usuário antes de assumir o controle.
 - Cache, versão instalada e sistema de atualização migrados oficialmente para 2.7.7.
 
+### V2.7.8 — Backup inteligente
+- Novo lembrete não invasivo de backup baseado em alterações relevantes.
+- Primeiro aviso após 10 alterações desde o último backup; ao escolher “Agora não”, reaparece após mais 5 alterações.
+- Botão “Fazer backup” diretamente no aviso.
+- Configuração para ativar ou desativar os lembretes.
+- Contador de alterações desde o último backup em Configurações → Dados e backup.
+- Exportar um backup zera o contador e reinicia o ciclo de lembretes.
+- Versão e cache PWA atualizados para 2.7.8.
