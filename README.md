@@ -222,3 +222,9 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Exclusão total agora exige a exportação bem-sucedida de um backup novo antes de liberar a continuação.
 - Importação valida a estrutura e bloqueia backups vazios antes de qualquer gravação.
 - A importação mostra a contagem de figuras, Wishlist e coleções e continua usando mesclagem por ID, sem apagar previamente os dados atuais.
+
+### Wishlist — refinamentos 2.7.8
+- Exclusão agora pede confirmação em modal do CURIÓ.
+- Após excluir, há 8 segundos para desfazer e restaurar o item completo.
+- O modal de edição mostra a loja detectada pelo link em tempo real.
+- “Marcar como adquirida” também está disponível dentro da edição e abre o cadastro da figura com nome, preço e loja preenchidos.
