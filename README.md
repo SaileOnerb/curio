@@ -230,3 +230,8 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - “Marcar como adquirida” também está disponível dentro da edição e abre o cadastro da figura com nome, preço e loja preenchidos.
 
 - Exclusão de figuras da coleção principal agora usa confirmação do CURIÓ e oferece 4 segundos para desfazer, restaurando o registro completo.
+
+### Refinamentos de entrada e feedback (2.7.8)
+- Salvamentos de figura, Wishlist e metas financeiras usam confirmação discreta “Salvo ✓”, sem interromper o fluxo com alertas de sucesso.
+- Links da Wishlist são normalizados: aceita endereço sem protocolo, padroniza HTTPS, remove fragmentos e parâmetros comuns de rastreamento e limpa barras finais desnecessárias.
+- Campos monetários aceitam formatos brasileiros e internacionais comuns, incluindo `129,90`, `R$ 129,90`, `1.299,90` e `1299.90`, formatando em pt-BR ao sair do campo.
