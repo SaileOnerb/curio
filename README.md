@@ -273,3 +273,13 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Hierarquia visual: Coleções como ação principal, Selecionar todas como secundária e Excluir como ação destrutiva.
 - Mobile organiza Coleções em largura total e as ações secundária/destrutiva lado a lado; telas muito estreitas empilham as ações.
 - Mantidos os mesmos handlers e fluxos funcionais de seleção, coleções, exclusão e cancelamento.
+
+### Diagnóstico e poda da Coleção (2.7.8)
+- A Poda 1A limpa foi validada e preservada em `checkpoint-pos-poda-1a-clean-2.7.8` (`fca465a`). Melhorou a navegação entre abas; a primeira abertura da Coleção continuou mais lenta.
+- A segunda sonda separou filtro, ordenação, `card()`, `join`, inserção no DOM e pintura. Com 61 figuras e 61 capas (~14,29 MB), a medição de referência registrou `card()` 5,5 ms, `join` 63,9 ms, DOM 501,6 ms e pintura 77,8 ms.
+- A terceira sonda (PR #1) comparou as mesmas 61 figuras: com capas, `card()` 5,6 ms, `join` 33,5 ms, DOM 447,2 ms e pintura 63,3 ms; com placeholders, `card()` 5,3 ms, `join` 0,1 ms, DOM 12,7 ms e pintura 34,7 ms. A diferença de DOM foi de 434,5 ms (~97%). O teste troca tanto a string Base64 no HTML quanto o processamento das imagens; não separa isoladamente esses custos.
+- Antes da poda das capas, o estado da `main` foi preservado em `checkpoint-pre-poda-capas-2.7.8` (`100281a`). Esse é o ponto de retorno da alteração da PR #2.
+- A poda da PR #2 monta os cards sem Base64 no `innerHTML` e atribui as capas em lotes de até 12 por frame após a inserção do DOM. Uma renderização nova cancela os lotes pendentes da anterior. As imagens armazenadas no IndexedDB não são modificadas.
+- As métricas da sonda continuam disponíveis em Configurações > Saúde dos dados. O tempo de atribuição das capas mede o agendamento e a definição de `src`, não garante a conclusão da decodificação ou pintura de todas as imagens.
+- **Validação pendente no aparelho:** confirmar que as 61 capas aparecem, navegação/filtros funcionam e comparar DOM, pintura e tempo de atribuição com as referências acima. Criar `checkpoint-pos-poda-capas-2.7.8` somente após validar a poda.
+- Esses checkpoints protegem o **código**. O backup JSON da coleção permanece separado e deve ser exportado no próprio aparelho; commits e branches não contêm as fotos nem os dados locais do usuário.
