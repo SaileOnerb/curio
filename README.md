@@ -215,3 +215,10 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Contador de alterações desde o último backup em Configurações → Dados e backup.
 - Exportar um backup zera o contador e reinicia o ciclo de lembretes.
 - Versão e cache PWA atualizados para 2.7.8.
+
+### Camada de segurança de dados (2.7.8)
+- Diagnóstico e recuperação permanente em modo somente leitura.
+- Checkpoint local de integridade: detecta quando um banco antes populado aparece inesperadamente vazio sem substituir o último estado conhecido.
+- Exclusão total agora exige a exportação bem-sucedida de um backup novo antes de liberar a continuação.
+- Importação valida a estrutura e bloqueia backups vazios antes de qualquer gravação.
+- A importação mostra a contagem de figuras, Wishlist e coleções e continua usando mesclagem por ID, sem apagar previamente os dados atuais.
