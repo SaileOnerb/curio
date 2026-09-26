@@ -530,7 +530,7 @@ $("#search").oninput=renderCollection;$("#makerFilter").onchange=renderCollectio
 let bulkMode=false,bulkSelected=new Set(),lastBulkDeleted=[],bulkUndoTimer=null;
 function updateBulkBar(){let bar=$("#bulkBar"),n=bulkSelected.size;if(bar)bar.classList.toggle("on",bulkMode);if($("#bulkCount"))$("#bulkCount").textContent=n+" "+(n===1?"selecionada":"selecionadas");if($("#bulkDelete"))$("#bulkDelete").disabled=!n;if($("#bulkGroups"))$("#bulkGroups").disabled=!n;if($("#selectFigures"))$("#selectFigures").textContent=bulkMode?"Cancelar seleção":"Selecionar"}
 function setBulkMode(on){bulkMode=!!on;if(!bulkMode)bulkSelected.clear();updateBulkBar();renderCollection()}
-function toggleBulk(id){if(!bulkMode)return;if(bulkSelected.has(id))bulkSelected.delete(id);else bulkSelected.add(id);updateBulkBar();renderCollection()}
+function toggleBulk(id){if(!bulkMode)return;if(bulkSelected.has(id)){bulkSelected.delete(id);if(bulkSelected.size===0){setBulkMode(false);return}}else bulkSelected.add(id);updateBulkBar();renderCollection()}
 let bulkPressTimer=null,bulkPressX=0,bulkPressY=0,bulkLongTriggered=false;
 function bulkIsMobile(){return window.matchMedia("(max-width:700px), (pointer:coarse)").matches}
 function bulkPressStart(e,id){if(!bulkIsMobile()||bulkMode||e.pointerType==="mouse")return;if(e.target.closest("button,.tag,.actions"))return;bulkLongTriggered=false;bulkPressX=e.clientX;bulkPressY=e.clientY;clearTimeout(bulkPressTimer);bulkPressTimer=setTimeout(()=>{bulkLongTriggered=true;bulkMode=true;bulkSelected.clear();bulkSelected.add(id);if(navigator.vibrate)navigator.vibrate(35);updateBulkBar();renderCollection()},500)}
