@@ -36,7 +36,7 @@ Acompanhe gastos do mês e do ano, total gasto, valor estimado da coleção, gr�
 
 ### 5. Mais / Configurações
 
-Ajuste tema claro ou escuro, privacidade dos valores da Home, metas, fabricantes personalizados e coleções. Em **Dados e backup**, use **Exportar JSON** para guardar uma cópia da coleção e **Importar JSON** para recuperar ou mesclar registros. O painel **Saúde dos dados** mostra contagens, último backup, alterações pendentes, snapshots e estado do armazenamento. Aqui também ficam as opções de atualização e instalação.
+Ajuste tema claro ou escuro, privacidade dos valores da Home, metas, fabricantes personalizados e coleções. Em **Dados e backup**, use **Exportar JSON** para guardar uma cópia da coleção e **Importar JSON** para recuperar ou mesclar registros. A opção **Otimizar imagens existentes** reduz o peso de fotos antigas com um backup prévio. As ferramentas de diagnóstico, recuperação e snapshots ficam recolhidas em **Ferramentas de recuperação**. Aqui também ficam as opções de atualização e instalação.
 
 ## Seus dados e backups
 
@@ -301,10 +301,15 @@ A versão publicada é um app estático em HTML, CSS e JavaScript, hospedado no 
 - A terceira sonda (PR #1) comparou as mesmas 61 figuras: com capas, `card()` 5,6 ms, `join` 33,5 ms, DOM 447,2 ms e pintura 63,3 ms; com placeholders, `card()` 5,3 ms, `join` 0,1 ms, DOM 12,7 ms e pintura 34,7 ms. A diferença de DOM foi de 434,5 ms (~97%). O teste troca tanto a string Base64 no HTML quanto o processamento das imagens; não separa isoladamente esses custos.
 - Antes da poda das capas, o estado da `main` foi preservado em `checkpoint-pre-poda-capas-2.7.8` (`100281a`). Esse é o ponto de retorno da alteração da PR #2.
 - A poda da PR #2 monta os cards sem Base64 no `innerHTML` e atribui as capas em lotes de até 12 por frame após a inserção do DOM. Uma renderização nova cancela os lotes pendentes da anterior. As imagens armazenadas no IndexedDB não são modificadas.
-- As métricas da sonda continuam disponíveis em Configurações > Saúde dos dados. O tempo de atribuição das capas mede o agendamento e a definição de `src`, não garante a conclusão da decodificação ou pintura de todas as imagens.
+- Durante a validação, as métricas da sonda ficaram disponíveis em Configurações > Saúde dos dados. O tempo de atribuição das capas media o agendamento e a definição de `src`, sem garantir a conclusão da decodificação ou pintura de todas as imagens. A interface da sonda foi removida após a validação.
 - A validação no aparelho confirmou as capas da Coleção. O estado corrigido foi preservado em `checkpoint-pos-poda-capas-2.7.8` (`4f5aacf`).
 - Esses checkpoints protegem o **código**. O backup JSON da coleção permanece separado e deve ser exportado no próprio aparelho; commits e branches não contêm as fotos nem os dados locais do usuário.
 - Primeiro teste da PR #2 no aparelho: as 61 capas apareceram na Coleção; DOM com capas 12 ms, pintura 73,5 ms e 61 `src` atribuídos em 255,2 ms (medição pontual). Com placeholders, DOM 20,1 ms e pintura 84,9 ms. Esses valores não medem o carregamento completo das imagens.
 - Regressão observada nesse teste: os quatro cards recentes da Home mostraram o ícone no lugar das fotos. A correção mantém a atribuição posterior apenas para a grade da Coleção e entrega as capas reais diretamente aos cards da Home, que reutilizam `card()`. A falha da Home foi investigada antes de validar a poda.
 - Correção complementar da Home: `renderHome()` usava `.map(card)`, que passa `(figura, índice)`; depois da nova assinatura de `card(f, withoutCovers, coverIndex)`, os índices 1–3 ativavam acidentalmente o modo sem capas. A chamada agora usa `.map(f => card(f))`, sem repassar o índice. O teste estático confirmou as quatro capas e o usuário confirmou a correção visual no aparelho.
 - **Poda validada no aparelho em 26/09/2026:** o usuário confirmou que todas as capas da Coleção aparecem e que as quatro capas de Aquisições recentes voltaram após a correção da PR #5. A medição anterior à correção da Home registrou DOM de 12 ms com capas, pintura de 73,5 ms e atribuição de 61 capas em 255,2 ms. O checkpoint posterior preserva esta versão corrigida.
+
+#### Configurações mais simples (2.7.8)
+- Os números detalhados da sonda e o painel Saúde dos dados saíram da tela principal de Configurações após a validação da poda.
+- A otimização de imagens existentes permanece visível. Diagnóstico, exportação de dados encontrados e snapshots continuam disponíveis em **Ferramentas de recuperação**, fechado por padrão.
+- Os mecanismos automáticos de integridade, backup e snapshots permanecem ativos.
