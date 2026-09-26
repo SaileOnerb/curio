@@ -282,6 +282,18 @@ body.dark .emptyBird img{filter:grayscale(1) invert(1)}
 body.dark .choiceSwitchTrack{box-shadow:inset 0 0 0 1px #ffffff0d}
 body.dark .privacySwitch:not(.on) .choiceSwitchTrack{background:#173b24}body.dark .privacySwitch.on .choiceSwitchTrack{background:#39393d}
 .choiceSwitch:focus-visible{outline:2px solid #0a84ff;outline-offset:3px;border-radius:999px}
+</style><style id="curio278-home-value-fit">
+/* Home: valores monetários devem permanecer inteiramente dentro dos cards */
+#homeStats .stat{min-width:0;overflow:hidden}
+#homeStats .stat .big{max-width:100%;font-variant-numeric:tabular-nums;line-height:1.05;letter-spacing:-.04em;white-space:nowrap}
+@media(max-width:700px){
+ #homeStats .stat{padding:18px 16px}
+ #homeStats .stat .big{font-size:clamp(20px,5.8vw,28px)}
+ #homeStats .stat:nth-child(n+3) .big{font-size:clamp(18px,5.25vw,25px)}
+}
+@media(max-width:390px){
+ #homeStats .stat:nth-child(n+3) .big{font-size:clamp(17px,4.9vw,22px)}
+}
 </style></head><body>
 <aside class="side"><div class="logo"><img class="brandIcon" src="./icons/icon-192.svg" alt=""><span class="brandCopy"><strong>CURIÓ</strong><small>Personal Collection · v2.7.8</small></span></div>
 <button class="nav on" data-v="home">⌂ Visão geral</button><button class="nav" data-v="collection">▦ Minha coleção</button><button class="nav" data-v="wishlist">♡ Wishlist</button><button class="nav" data-v="finance">◒ Financeiro</button>
