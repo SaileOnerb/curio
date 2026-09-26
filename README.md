@@ -266,3 +266,10 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Usa Storage API quando disponível para informar persistência e estimativa de uso/quota do armazenamento.
 - Estado geral indica Saudável ou Atenção conforme alerta de integridade e situação do backup.
 - Botão Atualizar diagnóstico refaz as leituras sem alterar os dados da coleção.
+
+### Refinamento da seleção múltipla (2.7.8)
+- Barra de ações em lote redesenhada como action sheet flutuante coerente com o design do CURIÓ.
+- Cabeçalho dedicado com contador e botão circular de fechar.
+- Hierarquia visual: Coleções como ação principal, Selecionar todas como secundária e Excluir como ação destrutiva.
+- Mobile organiza Coleções em largura total e as ações secundária/destrutiva lado a lado; telas muito estreitas empilham as ações.
+- Mantidos os mesmos handlers e fluxos funcionais de seleção, coleções, exclusão e cancelamento.
