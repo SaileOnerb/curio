@@ -241,3 +241,5 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Permite selecionar todas as figuras atualmente visíveis pelos filtros.
 - Figuras selecionadas podem ser adicionadas ou removidas de uma ou mais coleções em lote.
 - Exclusão em lote exige confirmação e oferece 4 segundos para desfazer, restaurando os registros completos.
+
+- No mobile, o modo de seleção em lote é ativado com toque longo (~500 ms) sobre uma figura; o botão Selecionar fica reservado ao desktop. Arrastar para rolar cancela o toque longo para evitar seleções acidentais.
