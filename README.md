@@ -252,3 +252,10 @@ Preview hospedado via GitHub Pages/HTTPS. Faça backups regularmente antes de tr
 - Checkpoint de integridade agora detecta banco vazio e quedas superiores a 50% quando havia ao menos 10 registros, preservando o último checkpoint saudável.
 - Exclusão total é marcada como intencional para não gerar falso alerta de integridade; o backup JSON externo continua obrigatório no fluxo de apagar tudo.
 - Snapshots locais protegem contra erros do app, mas não substituem backup externo porque podem ser removidos junto com os dados do site pelo navegador/sistema.
+
+### Auditoria responsiva (2.7.8)
+- Revisão estrutural para larguras compactas de 320/360/390/430 px e layouts intermediários/tablet.
+- Home usa estatísticas em duas colunas no mobile e cards de coleção em uma coluna, com tipografia fluida e proteção contra overflow.
+- Filtros, Wishlist, Financeiro, Configurações, formulários, modais, snapshots, toasts e seleção em lote receberam limites de largura e reorganização responsiva.
+- Em 360 px ou menos, ações críticas e backup passam a empilhar quando necessário; tablet recebe grade e espaçamento intermediários.
+- Inputs mobile mantêm tamanho adequado para toque e prevenção de zoom automático.
