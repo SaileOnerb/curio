@@ -145,6 +145,17 @@ O botão de perfil no topo mostra nome e avatar, e abre o e-mail, Atualizar dado
 Sair da conta e Editar perfil. Nome e foto reduzida (JPEG 160 × 160) são salvos
 em `user_settings.data` sob RLS e voltam ao entrar em outro dispositivo.
 
+Wishlist: Analisar link consulta `/api/product-preview`, uma Netlify Function que
+aceita apenas HTTPS em hosts explícitos de Mercado Livre, Amazon, AliExpress e
+Shopee, sem seguir redirects. Extrai JSON-LD/OG (nome, preço em BRL quando
+declarado, URL da foto) e solicita revisão antes de salvar. Algumas lojas
+bloqueiam robôs ou a exibição externa das imagens; nesse caso o preenchimento
+manual continua disponível. A imagem é referenciada pela URL da loja, então
+pode sumir quando a loja alterar o endereço. Não há histórico automático de preços.
+O ZIP manual do piloto publica só arquivos estáticos e não instala Functions.
+Para ativar a análise, conectar o site Netlify existente ao GitHub na branch
+`feat/online-foundation` e usar o `netlify.toml` da branch para build/publish.
+
 Configurações → Dados da conta → Importar JSON abre uma janela com prévia do
 `curio-backup` v1, quantidades, tamanho aproximado das fotos e identificador
 SHA-256. A importação é permitida em conta vazia ou para retomar exatamente o
