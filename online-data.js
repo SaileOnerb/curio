@@ -103,6 +103,60 @@
     message(figures.length+' figuras e '+remotePhotos.length+' fotos carregadas.');
     return {figures,groups,wishlist,settings};
   }
+  const asDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||Error('Foto ilegível'));reader.readAsDataURL(blob)});
+  async function exportBackup(progress=()=>{}){
+    if(!user)throw Error('Entre na conta.');
+    const owner=user.id, current=session;
+    const [fs,cs,ws,links,ps,ss]=await Promise.all(['figures','collections','wishlist','figure_collections','figure_photos','user_settings'].map(list));
+    if(current!==session)throw Error('Sessão alterada.');
+    const groups=cs.map((c,i)=>({id:numericId(c,i,'groups'),name:c.name}));
+    const groupMap=new Map(cs.map((c,i)=>[c.id,groups[i]]));
+    const figs=fs.map((f,i)=>({...f.data,id:numericId(f,i,'figures'),name:f.name,groups:[],cover:'',coverOriginal:'',gallery:[]}));
+    const figureMap=new Map(fs.map((f,i)=>[f.id,figs[i]]));
+    for(const link of links){const f=figureMap.get(link.figure_id),g=groupMap.get(link.collection_id);if(!f||!g)throw Error('Vínculo incompleto.');if(!f.groups.includes(g.name))f.groups.push(g.name)}
+    for(let i=0;i<ps.length;i++){
+      if(current!==session)throw Error('Sessão alterada.');
+      const p=ps[i],f=figureMap.get(p.figure_id);if(!f)throw Error('Foto sem figura.');
+      const blob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+p.storage_path);
+      if(!(blob instanceof Blob)||!blob.size||!['image/jpeg','image/png','image/webp'].includes(blob.type))throw Error('Foto inválida: '+p.storage_path);
+      const src=await asDataUrl(blob);
+      if(p.kind==='cover')f.cover=src;else if(p.kind==='original')f.coverOriginal=src;else if(p.kind==='gallery')f.gallery[p.position]=src;else throw Error('Tipo de foto inválido.');
+      progress('Baixando fotos: '+(i+1)+' de '+ps.length);
+    }
+    for(const f of figs){if(Array.from({length:f.gallery.length},(_,i)=>!f.gallery[i]).some(Boolean))throw Error('Galeria incompleta.');f.gallery=f.gallery.filter(Boolean)}
+    const {migrationFingerprint,migrationStartedAt,migrationCompletedAt,...prefs}=ss.find(x=>x.owner_id===owner)?.data||{};
+    const data={format:'curio-backup',formatVersion:1,appVersion:'online-pilot',exportedAt:new Date().toISOString(),figures:figs,wishlist:ws.map((w,i)=>({...w.data,id:numericId(w,i,'wishlist')})),groups,settings:{...prefs,id:'main'}};
+    const json=JSON.stringify(data),check=JSON.parse(json);
+    if(check.figures.length!==fs.length||check.groups.length!==cs.length||check.wishlist.length!==ws.length)throw Error('Conferência do backup falhou.');
+    if(current!==session)throw Error('Sessão alterada.');
+    const url=URL.createObjectURL(new Blob([json],{type:'application/json'})),link=document.createElement('a');
+    link.href=url;link.download='curio-online-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    return {figures:fs.length,photos:ps.length};
+  }
+  async function eraseAccount(progress=()=>{}){
+    if(!user)throw Error('Entre na conta.');
+    const owner=user.id,current=session;
+    const photosToDelete=await list('figure_photos');
+    if(current!==session)throw Error('Sessão alterada.');
+    async function removeRows(table){
+      progress('Apagando '+table+'…');
+      const response=await fetch(BASE+'/rest/v1/'+table+'?owner_id=eq.'+encodeURIComponent(owner),{method:'DELETE',headers:{apikey:key,Authorization:'Bearer '+token,Prefer:'return=representation'},cache:'no-store'});
+      if(!response.ok)throw Error('Falha em '+table+' (HTTP '+response.status+')');
+      if(current!==session)throw Error('Sessão alterada.');
+      if((await list(table)).length)throw Error('Restaram registros em '+table);
+    }
+    // Delete files first so metadata remains available for a safe retry after interruption.
+    for(let i=0;i<photosToDelete.length;i++){
+      if(current!==session)throw Error('Sessão alterada.');
+      const p=photosToDelete[i];progress('Removendo arquivos: '+(i+1)+' de '+photosToDelete.length);
+      const r=await fetch(BASE+'/storage/v1/object/'+BUCKET+'/'+p.storage_path,{method:'DELETE',headers:{apikey:key,Authorization:'Bearer '+token}});
+      if(!r.ok&&r.status!==404)throw Error('Falha ao remover arquivo '+(i+1)+' (HTTP '+r.status+').');
+    }
+    // Foreign-key dependents first; verify each table is empty before continuing.
+    for(const table of ['figure_collections','figure_photos','figures','collections','wishlist','user_settings'])await removeRows(table);
+    for(const url of photos.values())URL.revokeObjectURL(url);photos.clear();
+    progress('Limpeza concluída.');
+  }
   function lock(){
     document.body.classList.add('online-locked');
     document.body.classList.remove('online-unlocked');
@@ -149,13 +203,13 @@
     document.addEventListener('click',event=>{
       if(!document.body.classList.contains('online-unlocked'))return;
       const b=event.target.closest('button');if(!b)return;
-      if(b.closest('#onlineControls,#onlineGate')||b.matches('.nav,.mnav,#clearFilters,.lb-close,.lb-prev,.lb-next,#themeSwitch,#privacySwitch,#openGoals,#saveGoals,#goalsClose,#goalsCancel')||
+      if(b.closest('#onlineControls,#onlineGate')||b.matches('.nav,.mnav,#clearFilters,.lb-close,.lb-prev,.lb-next,#themeSwitch,#privacySwitch,#openGoals,#saveGoals,#goalsClose,#goalsCancel,#onlineEraseOpen,#onlineEraseClose,#onlineEraseCancel,#onlineEraseBackup,#onlineEraseNext,#onlineEraseBack,#onlineEraseConfirm')||
         b.closest('#photoLightbox')||b.matches('#detailModal .close'))return;
       event.preventDefault();event.stopImmediatePropagation();
       message('Esta versão da interface permite consulta. Cadastro e edição online estão na próxima etapa.',true);
     },true);
   }
-  window.curioRemote={start,read,saveSettings,
+  window.curioRemote={start,read,saveSettings,exportBackup,eraseAccount,account:()=>user&&{id:user.id,email:user.email},
     write:()=>Promise.reject(Error('Gravação desativada neste piloto de leitura.')),
     remove:()=>Promise.reject(Error('Exclusão desativada neste piloto de leitura.'))};
 })();
