@@ -453,6 +453,6 @@
       finally{button.disabled=false}
     };
   }
-  window.curioRemote={start,read,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},
+  window.curioRemote={start,read,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},previewAuth:()=>user?{Authorization:'Bearer '+token,apikey:key}:{},
     write,remove};
 })();
