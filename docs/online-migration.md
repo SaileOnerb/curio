@@ -16,6 +16,26 @@ continua funcionando localmente até existir um fluxo de conta e importação
 validado. Não publicar chaves de serviço no navegador; apenas a URL do projeto
 e a chave publicável podem aparecer no cliente, sempre com RLS ativo.
 
+## Piloto validado em 26/09/2026
+
+- A migração SQL foi executada no projeto Supabase de testes.
+- O teste de RLS passou para duas contas nas seis tabelas. O teste da API do
+  Storage permitiu uploads e leituras próprios e bloqueou leitura cruzada,
+  links assinados cruzados, upload na pasta alheia e acesso público.
+- O piloto de login exibiu registros da mesma conta no PC e no celular.
+- O backup JSON atual foi importado: **62 figuras, 10 coleções, 0 desejos e
+  100 fotos**. O importador comparou cada foto baixada com os bytes do arquivo.
+  O usuário confirmou que os dados aparecem no celular após login na mesma
+  conta. Esses números substituem o registro anterior de 61 figuras e 7 coleções.
+- `online-pilot.html`, `import-pilot.html`, `storage-test.html` e
+  `export-online.html` são ferramentas isoladas de teste. A PWA publicada
+  continua usando IndexedDB e não foi convertida para a fonte remota.
+- A exportação completa da conta online foi executada. O usuário importou o
+  JSON resultante em uma segunda conta de teste e confirmou que os dados
+  aparecem nela. Exportação e restauração foram validadas no piloto.
+  Não eliminar o JSON original nem os dados locais até a interface completa
+  usar a fonte remota e passar por nova validação.
+
 | Origem local | Destino remoto | Regra de importação |
 | --- | --- | --- |
 | `figures` | `figures` | `id` local vira `legacy_id`; `name` fica indexável; demais metadados vão em `data`, sem imagens nem `groups` |
