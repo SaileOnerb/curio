@@ -153,3 +153,29 @@ somente na primeira conclusão. Erros mantêm o arquivo selecionado para nova
 tentativa. O teste com servidor simulado cobriu importação, retomada sem
 duplicação e bloqueio de arquivo diferente. Ainda é necessária validação real
 no PC e no celular com uma conta de teste.
+
+## Cadastro e recuperação de acesso no piloto
+
+O login agora oferece Criar conta, reenviar confirmação, Esqueci minha senha e
+Definir nova senha. O formulário chama os endpoints públicos do Supabase Auth
+com a chave publicável. Senhas e tokens não são guardados em `localStorage`.
+Em uma página HTTPS, o cadastro e a recuperação enviam `redirect_to` para o
+próprio `index-online.html`; essa URL exata precisa constar em Authentication →
+URL Configuration → Redirect URLs. O retorno da confirmação pede login com
+senha; o retorno da recuperação usa o token da URL apenas em memória para
+atualizar a senha e limpa o fragmento do endereço. Ao abrir o ZIP com `file://`,
+não há URL de retorno própria: o e-mail usa a Site URL configurada no projeto.
+Por isso, a recuperação completa precisa ser testada numa página HTTPS.
+
+Antes de habilitar cadastro público, no painel do Supabase:
+
+1. Habilitar **Allow new users to sign up** e **Confirm Email** em Authentication.
+2. Configurar a Site URL e adicionar a URL HTTPS exata do piloto nas Redirect URLs.
+3. Configurar SMTP próprio para confirmação, reenvio e recuperação; testar entrega
+   com contas de e-mail fora da equipe do projeto.
+4. Testar cadastro, confirmação, login, reenvio e recuperação em PC e celular;
+   revisar limites e proteção contra abuso antes de divulgar o link.
+
+O teste de lógica com servidor simulado passou para cadastro, reenvio,
+recuperação e troca de senha. Nenhum cadastro real foi criado por este teste.
+A PR segue em rascunho e a PWA publicada continua com armazenamento local.
