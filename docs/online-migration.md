@@ -147,7 +147,8 @@ SHA-256. A importação é permitida em conta vazia ou para retomar exatamente o
 mesmo arquivo já iniciado nessa conta. Outra coleção presente bloqueia a
 operação para impedir uma mescla acidental. O arquivo local não é modificado.
 Coleções e figuras usam `legacy_id` para retomada; fotos são baixadas após o
-envio e comparadas por tamanho e SHA-256. A conclusão verifica contagens de
+envio e comparadas por tamanho e SHA-256. Até cinco fotos são processadas em
+paralelo para reduzir a espera, inclusive ao retomar o mesmo arquivo. A conclusão verifica contagens de
 figuras, coleções, wishlist, fotos e vínculos, e aplica preferências do arquivo
 somente na primeira conclusão. Erros mantêm o arquivo selecionado para nova
 tentativa. O teste com servidor simulado cobriu importação, retomada sem
