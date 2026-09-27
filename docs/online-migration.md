@@ -106,3 +106,15 @@ Uma conta nova acessa somente seus dados; a coleção local de teste migra com
 imagens e sem duplicação depois de uma interrupção simulada; exportação é
 restaurável; o segundo aparelho mostra a mesma coleção; a versão local 2.7.8
 continua recuperável pelo JSON e pelos checkpoints de código.
+
+## Nulificador Total da conta online (piloto)
+
+A interface `index-online.html` mostra a ação em Configurações após o login.
+Ela gera um backup JSON completo da conta, exige que a pessoa confira o download,
+abre uma segunda etapa e pede a palavra `APAGAR`. A limpeza é limitada pelo
+`owner_id` e pelas políticas RLS da conta atual. Exclui objetos do bucket privado,
+vínculos, metadados de fotos, figuras, coleções, wishlist e preferências. Não exclui
+a identidade do Supabase Auth nem dados offline do navegador. Se a operação falhar,
+mostra o erro e permite repetir com o backup guardado; objetos são apagados antes
+dos registros de fotos para preservar caminhos de recuperação. A exclusão real não
+foi executada sobre a coleção do usuário nesta validação.
