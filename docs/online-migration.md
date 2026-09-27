@@ -138,3 +138,18 @@ erro e permite atualizar para ler o estado confirmado pelo servidor. Edições
 de figuras e wishlist verificam `updated_at` para evitar sobrescrever uma
 alteração mais recente sem aviso. Ainda falta um fluxo completo de resolução
 de conflitos e recuperação de arquivos órfãos para a versão definitiva.
+
+## Importação pela interface online
+
+Configurações → Dados da conta → Importar JSON abre uma janela com prévia do
+`curio-backup` v1, quantidades, tamanho aproximado das fotos e identificador
+SHA-256. A importação é permitida em conta vazia ou para retomar exatamente o
+mesmo arquivo já iniciado nessa conta. Outra coleção presente bloqueia a
+operação para impedir uma mescla acidental. O arquivo local não é modificado.
+Coleções e figuras usam `legacy_id` para retomada; fotos são baixadas após o
+envio e comparadas por tamanho e SHA-256. A conclusão verifica contagens de
+figuras, coleções, wishlist, fotos e vínculos, e aplica preferências do arquivo
+somente na primeira conclusão. Erros mantêm o arquivo selecionado para nova
+tentativa. O teste com servidor simulado cobriu importação, retomada sem
+duplicação e bloqueio de arquivo diferente. Ainda é necessária validação real
+no PC e no celular com uma conta de teste.
