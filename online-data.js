@@ -346,6 +346,18 @@
     $('onlineGate').hidden=true;
     $('onlineControls').hidden=false;
   }
+  async function authError(response,action){
+    let body={};try{body=await response.json()}catch{}
+    const code=body.error_code||body.code||body.error||'';
+    const known={
+      invalid_credentials:'E-mail ou senha incorretos. Confira os dados da conta usada no piloto.',
+      email_not_confirmed:'O e-mail desta conta ainda não foi confirmado. Abra o link de confirmação ou use Reenviar confirmação.',
+      signup_disabled:'O cadastro está desativado no projeto Supabase.',
+      captcha_failed:'A verificação antirobô falhou. Atualize a página e tente novamente.',
+      over_email_send_rate_limit:'O limite de e-mails foi atingido. Aguarde e tente mais tarde.'
+    };
+    return Error(known[code]||body.msg||body.message||body.error_description||action+' (HTTP '+response.status+').');
+  }
   function redirectTo(){
     if(!['https:','http:'].includes(location.protocol))return '';
     if(location.protocol==='http:'&&!['localhost','127.0.0.1'].includes(location.hostname))return '';
@@ -400,7 +412,7 @@
         if(mode==='signup'){
           const r=await fetch(BASE+'/auth/v1/signup'+redirectQuery,{method:'POST',headers:{apikey:proposedKey,'Content-Type':'application/json'},body:JSON.stringify({email,password}),cache:'no-store'});
           $('onlinePassword').value=$('onlinePasswordConfirm').value='';
-          if(!r.ok)throw Error('Cadastro recusado (HTTP '+r.status+'). Verifique a senha e tente novamente.');
+          if(!r.ok)throw await authError(r,'Cadastro recusado');
           const result=await r.json();if(!result.user?.id&&!result.id)throw Error('O cadastro não foi confirmado pelo servidor.');
           try{localStorage.setItem('curio-supabase-publishable-key',proposedKey)}catch{}
           setMode('login',result.access_token?'Conta criada. Entre com sua senha.':'Confira o e-mail para confirmar a conta. Depois, entre com sua senha.');if(!result.access_token)$('onlineResend').hidden=false;
@@ -408,7 +420,7 @@
         }
         if(mode==='forgot'){
           const r=await fetch(BASE+'/auth/v1/recover'+redirectQuery,{method:'POST',headers:{apikey:proposedKey,'Content-Type':'application/json'},body:JSON.stringify({email}),cache:'no-store'});
-          if(!r.ok)throw Error('Não foi possível solicitar o link (HTTP '+r.status+').');
+          if(!r.ok)throw await authError(r,'Falha na recuperação');
           try{localStorage.setItem('curio-supabase-publishable-key',proposedKey)}catch{}
           setMode('login','Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha.');return;
         }
@@ -422,7 +434,7 @@
         const response=await fetch(BASE+'/auth/v1/token?grant_type=password',{
           method:'POST',headers:{apikey:proposedKey,'Content-Type':'application/json'},body:JSON.stringify({email,password}),cache:'no-store'});
         $('onlinePassword').value='';
-        if(!response.ok)throw Error('Login recusado (HTTP '+response.status+'). Verifique a confirmação do e-mail e a senha.');
+        if(!response.ok)throw await authError(response,'Login recusado');
         const data=await response.json();if(!data.access_token||!data.user?.id)throw Error('Login incompleto.');
         key=proposedKey;token=data.access_token;user=data.user;session++;
         try{localStorage.setItem('curio-supabase-publishable-key',key)}catch{}
