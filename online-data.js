@@ -36,7 +36,7 @@
   async function saveSettings(obj){
     if(!user)throw Error('Entre na conta.');
     const found=(await list('user_settings')).find(s=>s.owner_id===user.id);
-    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers'];
+    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','profileName','profileAvatar'];
     const next={...(found?.data||{})};
     for(const name of allowed)if(Object.prototype.hasOwnProperty.call(obj,name))next[name]=obj[name];
     const method=found?'PATCH':'POST';
@@ -439,7 +439,7 @@
         const data=await response.json();if(!data.access_token||!data.user?.id)throw Error('Login incompleto.');
         key=proposedKey;token=data.access_token;user=data.user;session++;
         try{localStorage.setItem('curio-supabase-publishable-key',key)}catch{}
-        await onReady();$('onlineAccount').textContent=user.email||email;unlock();
+        await onReady();unlock();
       }catch(e){message(e.message,true)}finally{button.disabled=false}
     };
     $('onlineLogout').onclick=()=>{
