@@ -5,7 +5,7 @@
   const BUCKET='figure-photos';
   let key='',token='',user=null,session=0;
   const photos=new Map(),ids=new Map(),versions=new Map();
-  let cache=null,photoRows=[],collectionRows=[];
+  let cache=null,photoRows=[],collectionRows=[],pendingImport=null,importing=false;
   const $=id=>document.getElementById(id);
   const message=(s,error=false)=>{
     for(const el of [$('onlineMessage'),$('onlineStatus')])if(el){el.textContent=s;el.style.color=error?'#ffa8a8':'#9ce0b8'}
@@ -213,6 +213,103 @@
     link.href=url;link.download='curio-online-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
     return {figures:fs.length,photos:ps.length};
   }
+  const importId=x=>String(x?.id??'');
+  const normalizeName=s=>String(s||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('pt-BR');
+  const importPhotoSpecs=f=>[
+    ...(f.cover?[{kind:'cover',position:0,src:f.cover}]:[]),
+    ...(f.coverOriginal?[{kind:'original',position:0,src:f.coverOriginal}]:[]),
+    ...(Array.isArray(f.gallery)?f.gallery.map((src,position)=>({kind:'gallery',position,src})).filter(p=>p.src):[])
+  ];
+  function importPhotoType(src){
+    const match=/^data:(image\/(?:jpeg|png|webp));base64,[A-Za-z0-9+/=]+$/.exec(src);
+    if(!match)throw Error('O backup contém uma foto em formato não suportado.');
+    return {mime:match[1],ext:{'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[match[1]]};
+  }
+  function inspectBackup(backup){
+    if(!backup||backup.format!=='curio-backup'||backup.formatVersion!==1||
+      !Array.isArray(backup.figures)||!Array.isArray(backup.wishlist)||!Array.isArray(backup.groups))
+      throw Error('Use um backup JSON completo do CURIÓ no formato curio-backup v1.');
+    const names=new Map(),idsByKind=[['figura',backup.figures],['wishlist',backup.wishlist],['coleção',backup.groups]];
+    for(const [kind,items] of idsByKind){const seen=new Set();for(const x of items){const id=importId(x);if(!id||seen.has(id))throw Error('ID ausente ou duplicado em '+kind+'.');seen.add(id)}}
+    for(const g of backup.groups){if(typeof g.name!=='string'||!g.name.trim())throw Error('Coleção sem nome.');const n=normalizeName(g.name);if(names.has(n))throw Error('Nomes duplicados de coleções.');names.set(n,{legacy_id:importId(g),name:g.name.trim()})}
+    let photos=0,bytes=0;
+    for(const f of backup.figures){
+      if(typeof f.name!=='string'||!f.name.trim())throw Error('Figura sem nome.');
+      if(f.groups!=null&&!Array.isArray(f.groups))throw Error('Coleções de figura inválidas.');
+      if(f.gallery!=null&&!Array.isArray(f.gallery))throw Error('Galeria inválida.');
+      for(const name of f.groups||[]){const n=normalizeName(name);if(n&&!names.has(n))names.set(n,{legacy_id:'name:'+n,name:String(name).trim()})}
+      for(const p of importPhotoSpecs(f)){importPhotoType(p.src);photos++;let size=Math.floor((p.src.length-p.src.indexOf(',')-1)*.75);if(size>10485760)throw Error('Uma foto supera 10 MB.');bytes+=size}
+    }
+    for(const w of backup.wishlist)for(const [name,value] of Object.entries(w))if(typeof value==='string'&&value.startsWith('data:'))throw Error('Imagem na Wishlist sem destino: '+name);
+    return {groups:[...names.values()],photos,bytes};
+  }
+  async function digest(data){const bytes=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+  async function prepareImport(file){
+    if(!user)throw Error('Entre na conta.');
+    if(!file||file.size>100*1048576)throw Error('Escolha um JSON de até 100 MB.');
+    const current=session,raw=await file.arrayBuffer();
+    let backup;try{backup=JSON.parse(new TextDecoder().decode(raw))}catch{throw Error('JSON inválido.');}
+    const manifest=inspectBackup(backup),fingerprint=await digest(raw);
+    if(current!==session)throw Error('Sessão alterada.');
+    pendingImport={backup,manifest,fingerprint,session:current,fileName:file.name};
+    return {fileName:file.name,figures:backup.figures.length,groups:manifest.groups.length,wishlist:backup.wishlist.length,photos:manifest.photos,bytes:manifest.bytes,fingerprint:fingerprint.slice(0,12),account:user.email||user.id};
+  }
+  async function runImport(progress=()=>{}){
+    if(importing)throw Error('Já existe uma importação em andamento.');
+    if(!pendingImport||!user||pendingImport.session!==session)throw Error('Selecione o arquivo após entrar na conta.');
+    importing=true;const current=session,{backup,manifest,fingerprint}=pendingImport,owner=user.id;
+    const ensureSession=()=>{if(current!==session)throw Error('Sessão alterada.');};
+    const rowKey=(row,kind,index)=>row.legacy_id??String(numericId(row,index,kind));
+    try{
+      progress('Conferindo a conta…');
+      const [settingsRows,existingFigures,existingGroups,existingWish]=await Promise.all(['user_settings','figures','collections','wishlist'].map(list));ensureSession();
+      const existingSettings=settingsRows.find(x=>x.owner_id===owner),marker=existingSettings?.data?.migrationFingerprint;
+      if(marker&&marker!==fingerprint)throw Error('Esta conta já iniciou outro backup. Use o mesmo arquivo ou uma conta vazia.');
+      if(!marker&&(existingFigures.length||existingGroups.length||existingWish.length))throw Error('Esta conta contém dados. Use uma conta vazia para evitar mesclar backups diferentes.');
+      if(!existingSettings){await mutation('user_settings','POST',{owner_id:owner,data:{migrationFingerprint:fingerprint,migrationStartedAt:new Date().toISOString()}})}
+      else if(!marker){const data={...existingSettings.data,migrationFingerprint:fingerprint,migrationStartedAt:new Date().toISOString()};const r=await mutation('user_settings','PATCH',{data},'?owner_id=eq.'+owner);if(r.length!==1)throw Error('Não foi possível reservar a conta.');}
+      const total=manifest.groups.length+backup.figures.length+backup.wishlist.length+manifest.photos+backup.figures.reduce((n,f)=>n+(f.groups||[]).length,0);
+      let done=0;const step=what=>progress(++done+' de '+total+' · '+what);
+      const groups=await list('collections'),groupIds=new Map();
+      for(const g of manifest.groups){ensureSession();let row=groups.find((r,i)=>rowKey(r,'groups',i)===g.legacy_id);
+        if(!row){row=(await mutation('collections','POST',{owner_id:owner,legacy_id:g.legacy_id,name:g.name}))[0];if(!row)throw Error('Coleção não confirmada.');groups.push(row)}
+        if(row.name!==g.name)throw Error('Conflito na coleção '+g.name+'.');groupIds.set(normalizeName(g.name),row.id);step('Coleção: '+g.name)}
+      const figures=await list('figures'),links=await list('figure_collections'),photoRecords=await list('figure_photos');
+      for(const f of backup.figures){ensureSession();const legacy_id=importId(f),name=f.name.trim();let row=figures.find((r,i)=>rowKey(r,'figures',i)===legacy_id);
+        if(!row){const {id,cover,coverOriginal,gallery,groups,name:ignored,...data}=f;row=(await mutation('figures','POST',{owner_id:owner,legacy_id,name,data}))[0];if(!row)throw Error('Figura não confirmada.');figures.push(row)}
+        if(row.name!==name)throw Error('Conflito na figura '+name+'.');step('Figura: '+name);
+        for(const groupName of f.groups||[]){const collection_id=groupIds.get(normalizeName(groupName));if(!collection_id)throw Error('Coleção desconhecida: '+groupName);
+          if(!links.some(x=>x.figure_id===row.id&&x.collection_id===collection_id)){const link=(await mutation('figure_collections','POST',{owner_id:owner,figure_id:row.id,collection_id}))[0];if(!link)throw Error('Vínculo não confirmado.');links.push(link)}step('Vínculo de '+name)}
+        for(const p of importPhotoSpecs(f)){ensureSession();const {mime,ext}=importPhotoType(p.src),blob=await (await fetch(p.src)).blob();if(!blob.size||blob.size>10485760)throw Error('Foto inválida: '+name);
+          const path=owner+'/'+row.id+'/'+p.kind+'-'+p.position+'.'+ext;
+          let found=photoRecords.find(x=>x.figure_id===row.id&&x.kind===p.kind&&x.position===p.position);
+          if(found&&found.storage_path!==path){const existingBlob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+found.storage_path);
+            if(existingBlob.size!==blob.size||await digest(await existingBlob.arrayBuffer())!==await digest(await blob.arrayBuffer()))throw Error('Foto diferente já existe em '+name+'.');
+          }else{
+            if(!found){const uploadResponse=await fetch(BASE+'/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',headers:authHeaders({'Content-Type':mime,'x-upsert':'true'}),body:blob});if(!uploadResponse.ok)throw Error('Falha ao enviar foto de '+name+' (HTTP '+uploadResponse.status+').');
+              found=(await mutation('figure_photos','POST',{owner_id:owner,figure_id:row.id,kind:p.kind,position:p.position,storage_path:path}))[0];if(!found)throw Error('Foto não registrada.');photoRecords.push(found)}
+            const downloaded=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+path);
+            if(downloaded.size!==blob.size||await digest(await downloaded.arrayBuffer())!==await digest(await blob.arrayBuffer()))throw Error('Foto não confere após envio: '+name+'.');
+          }
+          step('Foto verificada: '+name)
+        }
+      }
+      const wish=await list('wishlist');
+      for(const w of backup.wishlist){ensureSession();const legacy_id=importId(w);if(!wish.some((r,i)=>rowKey(r,'wishlist',i)===legacy_id)){const {id,...data}=w;const row=(await mutation('wishlist','POST',{owner_id:owner,legacy_id,data}))[0];if(!row)throw Error('Wishlist não confirmada.');wish.push(row)}step('Wishlist')}
+      const [fs,cs,ws,ps,ls]=await Promise.all(['figures','collections','wishlist','figure_photos','figure_collections'].map(list));ensureSession();
+      const importedFigureIds=new Set(fs.filter((r,i)=>backup.figures.some(f=>importId(f)===rowKey(r,'figures',i))).map(r=>r.id));
+      const importedGroupIds=new Set(cs.filter((r,i)=>manifest.groups.some(g=>g.legacy_id===rowKey(r,'groups',i))).map(r=>r.id));
+      const counts={figures:importedFigureIds.size,groups:importedGroupIds.size,wishlist:ws.filter((r,i)=>backup.wishlist.some(w=>importId(w)===rowKey(r,'wishlist',i))).length,photos:ps.filter(p=>importedFigureIds.has(p.figure_id)).length,links:ls.filter(l=>importedFigureIds.has(l.figure_id)&&importedGroupIds.has(l.collection_id)).length};
+      const expectedLinks=backup.figures.reduce((n,f)=>n+(f.groups||[]).length,0);
+      if(counts.figures!==backup.figures.length||counts.groups!==manifest.groups.length||counts.wishlist!==backup.wishlist.length||counts.photos!==manifest.photos||counts.links!==expectedLinks)throw Error('Contagens divergentes: '+JSON.stringify(counts));
+      const prefs=backup.settings&&typeof backup.settings==='object'&&!Array.isArray(backup.settings)?Object.fromEntries(Object.entries(backup.settings).filter(([k])=>!['id','lastBackup','changesSinceBackup','backupReminderNext'].includes(k))):{};
+      const setting=(await list('user_settings')).find(x=>x.owner_id===owner);
+      const data={...setting.data,...(setting.data.migrationCompletedAt?{}:prefs),migrationFingerprint:fingerprint,migrationCompletedAt:setting.data.migrationCompletedAt||new Date().toISOString()};
+      if((await mutation('user_settings','PATCH',{data},'?owner_id=eq.'+owner)).length!==1)throw Error('Preferências não confirmadas.');
+      progress('Concluído: '+counts.figures+' figuras, '+counts.groups+' coleções, '+counts.wishlist+' desejos e '+counts.photos+' fotos.');
+      return counts;
+    }finally{importing=false}
+  }
   async function eraseAccount(progress=()=>{}){
     if(!user)throw Error('Entre na conta.');
     const owner=user.id,current=session;
@@ -275,6 +372,7 @@
       }catch(e){message(e.message,true)}finally{button.disabled=false}
     };
     $('onlineLogout').onclick=()=>{
+      if(importing){message('Aguarde a importação terminar.',true);return}
       session++;token=key='';user=null;for(const url of photos.values())URL.revokeObjectURL(url);
       photos.clear();lock();message('Sessão encerrada.');
     };
@@ -284,6 +382,6 @@
       finally{button.disabled=false}
     };
   }
-  window.curioRemote={start,read,saveSettings,exportBackup,eraseAccount,account:()=>user&&{id:user.id,email:user.email},
+  window.curioRemote={start,read,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},
     write,remove};
 })();
