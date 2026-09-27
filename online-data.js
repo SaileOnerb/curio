@@ -55,10 +55,11 @@
     const url=URL.createObjectURL(blob);photos.set(path,url);return url;
   }
   async function mapLimit(items,limit,fn){
-    let cursor=0;
+    let cursor=0,firstError=null;
     await Promise.all(Array.from({length:Math.min(limit,items.length)},async()=>{
-      while(cursor<items.length){const index=cursor++;await fn(items[index],index)}
+      while(cursor<items.length&&!firstError){const index=cursor++;try{await fn(items[index],index)}catch(error){firstError=error}}
     }));
+    if(firstError)throw firstError;
   }
   async function read(){
     if(!user)throw Error('Entre na conta.');
@@ -274,13 +275,15 @@
       for(const g of manifest.groups){ensureSession();let row=groups.find((r,i)=>rowKey(r,'groups',i)===g.legacy_id);
         if(!row){row=(await mutation('collections','POST',{owner_id:owner,legacy_id:g.legacy_id,name:g.name}))[0];if(!row)throw Error('Coleção não confirmada.');groups.push(row)}
         if(row.name!==g.name)throw Error('Conflito na coleção '+g.name+'.');groupIds.set(normalizeName(g.name),row.id);step('Coleção: '+g.name)}
-      const figures=await list('figures'),links=await list('figure_collections'),photoRecords=await list('figure_photos');
+      const figures=await list('figures'),links=await list('figure_collections'),photoRecords=await list('figure_photos'),photoJobs=[];
       for(const f of backup.figures){ensureSession();const legacy_id=importId(f),name=f.name.trim();let row=figures.find((r,i)=>rowKey(r,'figures',i)===legacy_id);
         if(!row){const {id,cover,coverOriginal,gallery,groups,name:ignored,...data}=f;row=(await mutation('figures','POST',{owner_id:owner,legacy_id,name,data}))[0];if(!row)throw Error('Figura não confirmada.');figures.push(row)}
         if(row.name!==name)throw Error('Conflito na figura '+name+'.');step('Figura: '+name);
         for(const groupName of f.groups||[]){const collection_id=groupIds.get(normalizeName(groupName));if(!collection_id)throw Error('Coleção desconhecida: '+groupName);
           if(!links.some(x=>x.figure_id===row.id&&x.collection_id===collection_id)){const link=(await mutation('figure_collections','POST',{owner_id:owner,figure_id:row.id,collection_id}))[0];if(!link)throw Error('Vínculo não confirmado.');links.push(link)}step('Vínculo de '+name)}
-        for(const p of importPhotoSpecs(f)){ensureSession();const {mime,ext}=importPhotoType(p.src),blob=await (await fetch(p.src)).blob();if(!blob.size||blob.size>10485760)throw Error('Foto inválida: '+name);
+        for(const p of importPhotoSpecs(f))photoJobs.push({p,row,name});
+      }
+      await mapLimit(photoJobs,5,async({p,row,name})=>{ensureSession();const {mime,ext}=importPhotoType(p.src),blob=await (await fetch(p.src)).blob();if(!blob.size||blob.size>10485760)throw Error('Foto inválida: '+name);
           const path=owner+'/'+row.id+'/'+p.kind+'-'+p.position+'.'+ext;
           let found=photoRecords.find(x=>x.figure_id===row.id&&x.kind===p.kind&&x.position===p.position);
           if(found&&found.storage_path!==path){const existingBlob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+found.storage_path);
@@ -292,8 +295,7 @@
             if(downloaded.size!==blob.size||await digest(await downloaded.arrayBuffer())!==await digest(await blob.arrayBuffer()))throw Error('Foto não confere após envio: '+name+'.');
           }
           step('Foto verificada: '+name)
-        }
-      }
+      });
       const wish=await list('wishlist');
       for(const w of backup.wishlist){ensureSession();const legacy_id=importId(w);if(!wish.some((r,i)=>rowKey(r,'wishlist',i)===legacy_id)){const {id,...data}=w;const row=(await mutation('wishlist','POST',{owner_id:owner,legacy_id,data}))[0];if(!row)throw Error('Wishlist não confirmada.');wish.push(row)}step('Wishlist')}
       const [fs,cs,ws,ps,ls]=await Promise.all(['figures','collections','wishlist','figure_photos','figure_collections'].map(list));ensureSession();
