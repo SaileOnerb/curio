@@ -179,3 +179,10 @@ Antes de habilitar cadastro público, no painel do Supabase:
 O teste de lógica com servidor simulado passou para cadastro, reenvio,
 recuperação e troca de senha. Nenhum cadastro real foi criado por este teste.
 A PR segue em rascunho e a PWA publicada continua com armazenamento local.
+
+## Mensagens de erro do login
+
+O piloto mostra o código/mensagem de Auth de forma legível e sem truncar o
+texto. HTTP 400 sozinho não distingue senha incorreta, e-mail não confirmado
+ou outra validação. O teste simulado verificou a mensagem `invalid_credentials`.
+Nenhuma senha do usuário foi lida durante o diagnóstico.
