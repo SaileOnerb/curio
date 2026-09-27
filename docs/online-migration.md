@@ -141,6 +141,10 @@ de conflitos e recuperação de arquivos órfãos para a versão definitiva.
 
 ## Importação pela interface online
 
+O botão de perfil no topo mostra nome e avatar, e abre o e-mail, Atualizar dados,
+Sair da conta e Editar perfil. Nome e foto reduzida (JPEG 160 × 160) são salvos
+em `user_settings.data` sob RLS e voltam ao entrar em outro dispositivo.
+
 Configurações → Dados da conta → Importar JSON abre uma janela com prévia do
 `curio-backup` v1, quantidades, tamanho aproximado das fotos e identificador
 SHA-256. A importação é permitida em conta vazia ou para retomar exatamente o
