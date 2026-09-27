@@ -35,14 +35,18 @@ e a chave publicável podem aparecer no cliente, sempre com RLS ativo.
   aparecem nela. Exportação e restauração foram validadas no piloto.
   Não eliminar o JSON original nem os dados locais até a interface completa
   usar a fonte remota e passar por nova validação.
-- `index-online.html` e `online-data.js` são a primeira conexão da interface
-  completa à conta remota. Mostram Início, Coleção, Wishlist e Financeiro com
-  figuras, vínculos de coleções e fotos privadas. A aba Mais mantém tema e
-  privacidade, gravados por conta. As metas foram movidas para Financeiro →
-  Editar metas e também são gravadas por conta. Cadastro, edição e exclusão
-  de figuras, backup local e recuperação ficam inacessíveis nessa página até
-  existir uma camada de gravação remota segura para essas operações.
-  A aparência e a navegação ainda precisam de validação no PC e no celular.
+- `index-online.html` e `online-data.js` conectam a interface completa à conta
+  remota. A tela de login usa o ícone, a paleta e a tipografia do CURIÓ; guarda
+  apenas a chave publicável no navegador, nunca a senha. A interface lê e
+  grava figuras, fotos, coleções, vínculos, wishlist, preferências e metas.
+  Cadastro, edição, favoritos, conversão da wishlist e exclusão individual ou
+  em lote usam a conta autenticada. Fotos são enviadas ao bucket privado e
+  metadados são gravados em `figure_photos`. O botão Atualizar consulta o
+  servidor para trazer mudanças de outro dispositivo. Configurações oferece
+  exportação JSON completa e o Nulificador Total online com backup e duas
+  etapas de confirmação. O usuário validou o Nulificador em uma conta de
+  teste. A interface completa com gravação ainda precisa de teste manual no
+  PC e no celular antes de substituir a PWA publicada.
 
 | Origem local | Destino remoto | Regra de importação |
 | --- | --- | --- |
@@ -118,3 +122,19 @@ a identidade do Supabase Auth nem dados offline do navegador. Se a operação fa
 mostra o erro e permite repetir com o backup guardado; objetos são apagados antes
 dos registros de fotos para preservar caminhos de recuperação. A exclusão real não
 foi executada sobre a coleção do usuário nesta validação.
+
+## Validação do piloto com gravação
+
+Executar em uma conta de teste: criar coleção; cadastrar figura com capa e
+galeria; editar nome, preço, foto e coleções; adicionar e editar wishlist;
+converter item em figura; excluir e desfazer; atualizar no segundo dispositivo
+e comparar. Gerar backup JSON antes de limpar a conta. O teste automatizado
+com respostas simuladas cobre criação, edição, vínculo, foto, wishlist e
+exclusões. Não houve escrita automatizada na coleção real do usuário.
+
+As operações de banco e Storage são chamadas separadas: uma falha no meio
+pode deixar metadados ou arquivos parcialmente atualizados. O piloto mostra
+erro e permite atualizar para ler o estado confirmado pelo servidor. Edições
+de figuras e wishlist verificam `updated_at` para evitar sobrescrever uma
+alteração mais recente sem aviso. Ainda falta um fluxo completo de resolução
+de conflitos e recuperação de arquivos órfãos para a versão definitiva.
