@@ -36,10 +36,12 @@ e a chave publicável podem aparecer no cliente, sempre com RLS ativo.
   Não eliminar o JSON original nem os dados locais até a interface completa
   usar a fonte remota e passar por nova validação.
 - `index-online.html` e `online-data.js` são a primeira conexão da interface
-  completa à conta remota, em modo de consulta. Mostram Início, Coleção,
-  Wishlist e Financeiro com figuras, vínculos de coleções e fotos privadas.
-  Cadastro, edição, exclusão, backup local e ferramentas de recuperação ficam
-  inacessíveis nessa página até existir uma camada de gravação remota segura.
+  completa à conta remota. Mostram Início, Coleção, Wishlist e Financeiro com
+  figuras, vínculos de coleções e fotos privadas. A aba Mais mantém tema e
+  privacidade, gravados por conta. As metas foram movidas para Financeiro →
+  Editar metas e também são gravadas por conta. Cadastro, edição e exclusão
+  de figuras, backup local e recuperação ficam inacessíveis nessa página até
+  existir uma camada de gravação remota segura para essas operações.
   A aparência e a navegação ainda precisam de validação no PC e no celular.
 
 | Origem local | Destino remoto | Regra de importação |
