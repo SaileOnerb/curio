@@ -32,6 +32,22 @@
       if(rows.length<500)return result;
     }
   }
+  async function saveSettings(obj){
+    if(!user)throw Error('Entre na conta.');
+    const found=(await list('user_settings')).find(s=>s.owner_id===user.id);
+    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal'];
+    const next={...(found?.data||{})};
+    for(const name of allowed)if(Object.prototype.hasOwnProperty.call(obj,name))next[name]=obj[name];
+    const method=found?'PATCH':'POST';
+    const url='/rest/v1/user_settings'+(found?'?owner_id=eq.'+user.id:'');
+    const response=await fetch(BASE+url,{method,headers:{apikey:key,Authorization:'Bearer '+token,
+      'Content-Type':'application/json',Prefer:'return=representation'},
+      body:JSON.stringify(found?{data:next}:{owner_id:user.id,data:next})});
+    if(!response.ok)throw Error('Falha ao salvar preferências (HTTP '+response.status+').');
+    const result=await response.json();
+    if(!Array.isArray(result)||result.length!==1)throw Error('Preferências não confirmadas no servidor.');
+    if(window.curioRemote)window.curioRemote.currentSettings={...next};
+  }
   async function photo(path){
     if(photos.has(path))return photos.get(path);
     const blob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+path);
@@ -133,13 +149,13 @@
     document.addEventListener('click',event=>{
       if(!document.body.classList.contains('online-unlocked'))return;
       const b=event.target.closest('button');if(!b)return;
-      if(b.closest('#onlineControls,#onlineGate')||b.matches('.nav,.mnav,#clearFilters,.lb-close,.lb-prev,.lb-next')||
+      if(b.closest('#onlineControls,#onlineGate')||b.matches('.nav,.mnav,#clearFilters,.lb-close,.lb-prev,.lb-next,#themeSwitch,#privacySwitch,#openGoals,#saveGoals,#goalsClose,#goalsCancel')||
         b.closest('#photoLightbox')||b.matches('#detailModal .close'))return;
       event.preventDefault();event.stopImmediatePropagation();
       message('Esta versão da interface permite consulta. Cadastro e edição online estão na próxima etapa.',true);
     },true);
   }
-  window.curioRemote={start,read,
+  window.curioRemote={start,read,saveSettings,
     write:()=>Promise.reject(Error('Gravação desativada neste piloto de leitura.')),
     remove:()=>Promise.reject(Error('Exclusão desativada neste piloto de leitura.'))};
 })();
