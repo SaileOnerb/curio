@@ -8,6 +8,9 @@ function productJson(html){for(const script of html.matchAll(/<script\b[^>]*type
 function cleanImage(src,base){try{let url=new URL(src,base);return url.protocol==='https:'&&url.username===''&&url.password===''?url.href:''}catch{return ''}}
 export default async function handler(req){
  if(req.method!=='POST')return response({error:'Método inválido.'},405);
+ const auth=req.headers.get('authorization'),key=req.headers.get('apikey');
+ if(!auth?.startsWith('Bearer ')||!key?.startsWith('sb_publishable_'))return response({error:'Entre na conta para analisar links.'},401);
+ try{const check=await fetch('https://xyuqdpenhnlwnplisxjh.supabase.co/auth/v1/user',{headers:{authorization:auth,apikey:key},signal:AbortSignal.timeout(4000)});if(!check.ok)return response({error:'Sessão expirada. Entre novamente.'},401)}catch{return response({error:'Não foi possível verificar a conta agora.'},503)}
  let supplied;try{supplied=(await req.json()).url}catch{return response({error:'Link inválido.'},400)}
  let url;try{url=new URL(supplied);if(url.protocol!=='https:'||!safeHost(url.hostname.toLowerCase())||url.username||url.password||url.port)throw Error()}catch{return response({error:'Esta loja ainda não é compatível. Preencha os dados manualmente.'},400)}
  try{
