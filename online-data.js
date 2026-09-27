@@ -283,7 +283,7 @@
           if(!links.some(x=>x.figure_id===row.id&&x.collection_id===collection_id)){const link=(await mutation('figure_collections','POST',{owner_id:owner,figure_id:row.id,collection_id}))[0];if(!link)throw Error('Vínculo não confirmado.');links.push(link)}step('Vínculo de '+name)}
         for(const p of importPhotoSpecs(f))photoJobs.push({p,row,name});
       }
-      await mapLimit(photoJobs,5,async({p,row,name})=>{ensureSession();const {mime,ext}=importPhotoType(p.src),blob=await (await fetch(p.src)).blob();if(!blob.size||blob.size>10485760)throw Error('Foto inválida: '+name);
+      await mapLimit(photoJobs,6,async({p,row,name})=>{ensureSession();const {mime,ext}=importPhotoType(p.src),blob=await (await fetch(p.src)).blob();if(!blob.size||blob.size>10485760)throw Error('Foto inválida: '+name);
           const path=owner+'/'+row.id+'/'+p.kind+'-'+p.position+'.'+ext;
           let found=photoRecords.find(x=>x.figure_id===row.id&&x.kind===p.kind&&x.position===p.position);
           if(found&&found.storage_path!==path){const existingBlob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+found.storage_path);
@@ -291,10 +291,9 @@
           }else{
             if(!found){const uploadResponse=await fetch(BASE+'/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',headers:authHeaders({'Content-Type':mime,'x-upsert':'true'}),body:blob});if(!uploadResponse.ok)throw Error('Falha ao enviar foto de '+name+' (HTTP '+uploadResponse.status+').');
               found=(await mutation('figure_photos','POST',{owner_id:owner,figure_id:row.id,kind:p.kind,position:p.position,storage_path:path}))[0];if(!found)throw Error('Foto não registrada.');photoRecords.push(found)}
-            const downloaded=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+path);
-            if(downloaded.size!==blob.size||await digest(await downloaded.arrayBuffer())!==await digest(await blob.arrayBuffer()))throw Error('Foto não confere após envio: '+name+'.');
+            if(!photos.has(path))photos.set(path,URL.createObjectURL(blob));
           }
-          step('Foto verificada: '+name)
+          step('Foto enviada: '+name)
       });
       const wish=await list('wishlist');
       for(const w of backup.wishlist){ensureSession();const legacy_id=importId(w);if(!wish.some((r,i)=>rowKey(r,'wishlist',i)===legacy_id)){const {id,...data}=w;const row=(await mutation('wishlist','POST',{owner_id:owner,legacy_id,data}))[0];if(!row)throw Error('Wishlist não confirmada.');wish.push(row)}step('Wishlist')}
