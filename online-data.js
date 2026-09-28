@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const BASE='https://xyuqdpenhnlwnplisxjh.supabase.co';
+  const PUBLISHABLE_KEY='sb_publishable_N7lduvfFGmmDMWIxVz-YgQ_SVYKCYAc';
   const BUCKET='figure-photos';
   let key='',token='',user=null,session=0;
   const SESSION_KEY='curio-online-session-v1';
@@ -404,8 +405,6 @@
   async function start(onReady){
     lock();
     document.body.classList.add('online-restoring');
-    try{$('onlineKey').value=localStorage.getItem('curio-supabase-publishable-key')||''}catch{}
-    if(!$('onlineKey').value)$('onlineKey').closest('details').open=true;
     let mode='login',recoveryToken='';
     const setMode=(next,notice='')=>{
       mode=next;const titles={login:'Entrar no CURIÓ',signup:'Criar conta',forgot:'Recuperar senha',reset:'Definir nova senha'};
@@ -421,8 +420,8 @@
     $('onlineForgot').onclick=()=>setMode('forgot');
     $('onlineBack').onclick=()=>{recoveryToken='';setMode('login')};
     $('onlineResend').onclick=async()=>{
-      const proposedKey=$('onlineKey').value.trim(),email=$('onlineEmail').value.trim();
-      if(!email||!proposedKey.startsWith('sb_publishable_'))return message('Informe e-mail e chave publicável.',true);
+      const proposedKey=PUBLISHABLE_KEY,email=$('onlineEmail').value.trim();
+      if(!email)return message('Informe o e-mail.',true);
       const button=$('onlineResend');button.disabled=true;
       try{const redirect=redirectTo(),r=await fetch(BASE+'/auth/v1/resend'+(redirect?'?redirect_to='+encodeURIComponent(redirect):''),{method:'POST',headers:{apikey:proposedKey,'Content-Type':'application/json'},body:JSON.stringify({type:'signup',email})});if(!r.ok)throw Error('Não foi possível reenviar (HTTP '+r.status+').');message('Se o cadastro estiver pendente, confira seu e-mail.')}catch(e){message(e.message,true)}finally{button.disabled=false}
     };
@@ -439,8 +438,8 @@
     if(!recoveryToken){
       try{
         const saved=storedSession();
-        if(saved?.key?.startsWith('sb_publishable_')&&saved.refresh_token&&saved.user?.id){
-          key=saved.key;token=saved.access_token||'';refreshToken=saved.refresh_token;user=saved.user;expiresAt=Number(saved.expires_at)||0;
+        if(saved?.refresh_token&&saved.user?.id){
+          key=PUBLISHABLE_KEY;token=saved.access_token||'';refreshToken=saved.refresh_token;user=saved.user;expiresAt=Number(saved.expires_at)||0;
           message('Restaurando sua sessão…');
           if(!token||Date.now()>expiresAt*1000-60000)await refreshSession();
           else scheduleRefresh();
@@ -455,8 +454,7 @@
     $('onlineLogin').onclick=async()=>{
       const button=$('onlineLogin');button.disabled=true;
       try{
-        const proposedKey=$('onlineKey').value.trim();
-        if(!proposedKey.startsWith('sb_publishable_'))throw Error('Use a chave publicável sb_publishable_…');
+        const proposedKey=PUBLISHABLE_KEY;
         const email=$('onlineEmail').value.trim(),password=$('onlinePassword').value;
         if(mode!=='reset'&&!email)throw Error('Informe o e-mail.');
         if(mode!=='forgot'&&!password)throw Error('Informe a senha.');
@@ -470,14 +468,12 @@
           $('onlinePassword').value=$('onlinePasswordConfirm').value='';
           if(!r.ok)throw await authError(r,'Cadastro recusado');
           const result=await r.json();if(!result.user?.id&&!result.id)throw Error('O cadastro não foi confirmado pelo servidor.');
-          try{localStorage.setItem('curio-supabase-publishable-key',proposedKey)}catch{}
           setMode('login',result.access_token?'Conta criada. Entre com sua senha.':'Confira o e-mail para confirmar a conta. Depois, entre com sua senha.');if(!result.access_token)$('onlineResend').hidden=false;
           return;
         }
         if(mode==='forgot'){
           const r=await fetch(BASE+'/auth/v1/recover'+redirectQuery,{method:'POST',headers:{apikey:proposedKey,'Content-Type':'application/json'},body:JSON.stringify({email}),cache:'no-store'});
           if(!r.ok)throw await authError(r,'Falha na recuperação');
-          try{localStorage.setItem('curio-supabase-publishable-key',proposedKey)}catch{}
           setMode('login','Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha.');return;
         }
         if(mode==='reset'){
@@ -493,7 +489,6 @@
         if(!response.ok)throw await authError(response,'Login recusado');
         const data=await response.json();if(!data.access_token||!data.user?.id)throw Error('Login incompleto.');
         session++;const persisted=acceptSession(data,proposedKey);
-        try{localStorage.setItem('curio-supabase-publishable-key',key)}catch{}
         await onReady();unlock();
         if(!persisted)message('Seu navegador bloqueou o armazenamento da sessão. O F5 exigirá novo login.',true);
       }catch(e){message(e.message,true)}finally{button.disabled=false}
