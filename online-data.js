@@ -72,7 +72,7 @@
   async function saveSettings(obj){
     if(!user)throw Error('Entre na conta.');
     const found=(await list('user_settings')).find(s=>s.owner_id===user.id);
-    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','profileName','profileAvatar'];
+    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','hiddenMakers','profileName','profileAvatar'];
     const next={...(found?.data||{})};
     for(const name of allowed)if(Object.prototype.hasOwnProperty.call(obj,name))next[name]=obj[name];
     const method=found?'PATCH':'POST';
