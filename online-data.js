@@ -4,9 +4,38 @@
   const BASE='https://xyuqdpenhnlwnplisxjh.supabase.co';
   const BUCKET='figure-photos';
   let key='',token='',user=null,session=0;
+  const SESSION_KEY='curio-online-session-v1';
+  let refreshToken='',expiresAt=0,refreshTimer=null,refreshPromise=null;
   const photos=new Map(),ids=new Map(),versions=new Map();
   let cache=null,photoRows=[],collectionRows=[],pendingImport=null,importing=false;
   const $=id=>document.getElementById(id);
+  function clearStoredSession(){try{localStorage.removeItem(SESSION_KEY)}catch{}}
+  function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({key,access_token:token,refresh_token:refreshToken,expires_at:expiresAt,user}))}catch{}}
+  function scheduleRefresh(){clearTimeout(refreshTimer);if(!refreshToken||!user)return;refreshTimer=setTimeout(()=>{refreshSession().catch(()=>{})},Math.max(1000,expiresAt*1000-Date.now()-60000))}
+  function acceptSession(data,proposedKey){
+    if(!data.access_token||!data.refresh_token||!data.user?.id)throw Error('Sessão incompleta. Entre novamente.');
+    key=proposedKey;token=data.access_token;refreshToken=data.refresh_token;user=data.user;
+    expiresAt=Number(data.expires_at)||Math.floor(Date.now()/1000)+(Number(data.expires_in)||3600);
+    saveSession();scheduleRefresh();
+  }
+  async function refreshSession(){
+    if(refreshPromise)return refreshPromise;
+    if(!refreshToken||!key)throw Error('Entre novamente.');
+    const current=session,oldRefresh=refreshToken,oldKey=key;
+    refreshPromise=(async()=>{
+      const response=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{
+        method:'POST',headers:{apikey:oldKey,'Content-Type':'application/json'},
+        body:JSON.stringify({refresh_token:oldRefresh}),cache:'no-store'});
+      if(!response.ok)throw Error('Sua sessão expirou. Entre novamente.');
+      const data=await response.json();
+      if(current!==session||oldRefresh!==refreshToken)throw Error('Sessão alterada.');
+      acceptSession(data,oldKey);
+    })().catch(error=>{
+      if(current===session&&oldRefresh===refreshToken){clearTimeout(refreshTimer);clearStoredSession();token=refreshToken='';user=null;lock()}
+      throw error;
+    }).finally(()=>{refreshPromise=null});
+    return refreshPromise;
+  }
   const message=(s,error=false)=>{
     for(const el of [$('onlineMessage'),$('onlineStatus')])if(el){el.textContent=s;el.style.color=error?'#ffa8a8':'#9ce0b8'}
   };
@@ -364,7 +393,7 @@
     if(location.protocol==='http:'&&!['localhost','127.0.0.1'].includes(location.hostname))return '';
     return location.origin+location.pathname;
   }
-  function start(onReady){
+  async function start(onReady){
     lock();
     try{$('onlineKey').value=localStorage.getItem('curio-supabase-publishable-key')||''}catch{}
     if(!$('onlineKey').value)$('onlineKey').closest('details').open=true;
@@ -397,6 +426,21 @@
         history.replaceState(null,'',location.pathname+location.search);
       }
     }catch{}
+    if(recoveryToken)clearStoredSession();
+    if(!recoveryToken){
+      try{
+        const saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+        if(saved?.key?.startsWith('sb_publishable_')&&saved.refresh_token&&saved.user?.id){
+          key=saved.key;refreshToken=saved.refresh_token;user=saved.user;
+          message('Restaurando sua sessão…');
+          await refreshSession();
+          try{await onReady();unlock()}catch(error){unlock();message('Sessão restaurada. Falha ao atualizar: '+error.message,true)}
+        }
+      }catch(error){
+        if(user){clearTimeout(refreshTimer);clearStoredSession();token=refreshToken='';user=null;lock()}
+        message('Não foi possível restaurar a sessão. Entre novamente.',true);
+      }
+    }
     $('onlineLogin').onclick=async()=>{
       const button=$('onlineLogin');button.disabled=true;
       try{
@@ -437,14 +481,17 @@
         $('onlinePassword').value='';
         if(!response.ok)throw await authError(response,'Login recusado');
         const data=await response.json();if(!data.access_token||!data.user?.id)throw Error('Login incompleto.');
-        key=proposedKey;token=data.access_token;user=data.user;session++;
+        session++;acceptSession(data,proposedKey);
         try{localStorage.setItem('curio-supabase-publishable-key',key)}catch{}
         await onReady();unlock();
       }catch(e){message(e.message,true)}finally{button.disabled=false}
     };
     $('onlineLogout').onclick=()=>{
       if(importing){message('Aguarde a importação terminar.',true);return}
-      session++;token=key='';user=null;for(const url of photos.values())URL.revokeObjectURL(url);
+      const previousToken=token,previousKey=key;
+      session++;clearTimeout(refreshTimer);clearStoredSession();token=refreshToken=key='';user=null;expiresAt=0;
+      if(previousToken)fetch(BASE+'/auth/v1/logout',{method:'POST',headers:{apikey:previousKey,Authorization:'Bearer '+previousToken}}).catch(()=>{});
+      for(const url of photos.values())URL.revokeObjectURL(url);
       photos.clear();lock();setMode('login','Sessão encerrada.');
     };
     $('onlineRefresh').onclick=async()=>{
@@ -452,6 +499,9 @@
       try{await onReady()}catch(e){message('Falha ao atualizar: '+e.message,true)}
       finally{button.disabled=false}
     };
+    document.addEventListener('visibilitychange',()=>{
+      if(!document.hidden&&user&&refreshToken&&Date.now()>expiresAt*1000-60000)refreshSession().catch(()=>message('Sessão expirada. Entre novamente.',true));
+    });
   }
   window.curioRemote={start,read,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},previewAuth:()=>user?{Authorization:'Bearer '+token,apikey:key}:{},
     write,remove};
