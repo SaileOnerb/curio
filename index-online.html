@@ -433,7 +433,7 @@ body.online-unlocked #settings .settingsBlock:nth-child(n+5){display:none!import
 #wishlist #analyzeWish{grid-column:1/-1;justify-self:start}#wishAnalyzePreview[hidden]{display:none!important}
 #onlineImportPreview{white-space:pre-line;line-height:1.55}#onlineImportProgress{min-height:24px;margin-top:14px}#onlineImportModal .onlineImportPick{margin-top:22px}#onlineImportModal .onlineImportPick input{width:100%}
 #onlineGate[hidden],#onlineControls[hidden]{display:none!important}body.online-restoring #onlineGate{visibility:hidden}body.online-restoring::after{content:"Carregando sua coleção…";position:fixed;inset:0;display:grid;place-items:center;background:#0b0b0d;color:#d1d1d6;font:600 14px system-ui,sans-serif;letter-spacing:.02em;z-index:9999}
-#onlineControls{position:fixed;top:14px;right:20px;z-index:50;color:#f5f5f7}body.online-unlocked:has(.modal.on) #onlineControls{visibility:hidden;pointer-events:none}
+#onlineControls{position:fixed;top:14px;right:20px;z-index:30;color:#f5f5f7}body.online-unlocked #figureModal.modal.on{z-index:80}body.online-unlocked:has(.modal.on) #onlineControls{visibility:hidden;pointer-events:none}
 #onlineProfileToggle{display:flex;align-items:center;gap:9px;border:1px solid #ffffff2b;border-radius:24px;padding:5px 11px 5px 5px;background:#242428;color:#f5f5f7;box-shadow:0 5px 22px #0004;cursor:pointer;font-weight:650;max-width:190px}
 #onlineAccount{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#onlineProfileToggle:focus-visible{outline:2px solid #b7b7c5;outline-offset:3px}
 #onlineProfileToggle .profileChevron{width:14px;height:14px;flex:none;color:#a8a8ad;transition:transform .18s ease}#onlineProfileToggle[aria-expanded="true"] .profileChevron{transform:rotate(180deg)}
