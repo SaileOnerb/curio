@@ -26,12 +26,12 @@
       const response=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{
         method:'POST',headers:{apikey:oldKey,'Content-Type':'application/json'},
         body:JSON.stringify({refresh_token:oldRefresh}),cache:'no-store'});
-      if(!response.ok)throw Error('Sua sessão expirou. Entre novamente.');
+      if(!response.ok){const error=Error('Não foi possível renovar a sessão (HTTP '+response.status+').');error.invalidSession=[400,401,403].includes(response.status);throw error}
       const data=await response.json();
       if(current!==session||oldRefresh!==refreshToken)throw Error('Sessão alterada.');
       acceptSession(data,oldKey);
     })().catch(error=>{
-      if(current===session&&oldRefresh===refreshToken){clearTimeout(refreshTimer);clearStoredSession();token=refreshToken='';user=null;lock()}
+      if(error.invalidSession&&current===session&&oldRefresh===refreshToken){clearTimeout(refreshTimer);clearStoredSession();token=refreshToken='';user=null;lock()}
       throw error;
     }).finally(()=>{refreshPromise=null});
     return refreshPromise;
@@ -431,14 +431,15 @@
       try{
         const saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
         if(saved?.key?.startsWith('sb_publishable_')&&saved.refresh_token&&saved.user?.id){
-          key=saved.key;refreshToken=saved.refresh_token;user=saved.user;
+          key=saved.key;token=saved.access_token||'';refreshToken=saved.refresh_token;user=saved.user;expiresAt=Number(saved.expires_at)||0;
           message('Restaurando sua sessão…');
-          await refreshSession();
+          if(!token||Date.now()>expiresAt*1000-60000)await refreshSession();
+          else scheduleRefresh();
           try{await onReady();unlock()}catch(error){unlock();message('Sessão restaurada. Falha ao atualizar: '+error.message,true)}
         }
       }catch(error){
-        if(user){clearTimeout(refreshTimer);clearStoredSession();token=refreshToken='';user=null;lock()}
-        message('Não foi possível restaurar a sessão. Entre novamente.',true);
+        if(user){clearTimeout(refreshTimer);token='';user=null;lock()}
+        message(error.invalidSession?'Sessão expirada. Entre novamente.':'Não foi possível restaurar agora. Confira a conexão e atualize a página.',true);
       }
     }
     $('onlineLogin').onclick=async()=>{
