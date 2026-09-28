@@ -152,6 +152,9 @@ declarado, URL da foto) e solicita revisão antes de salvar. Algumas lojas
 bloqueiam robôs ou a exibição externa das imagens; nesse caso o preenchimento
 manual continua disponível. A imagem é referenciada pela URL da loja, então
 pode sumir quando a loja alterar o endereço. Não há histórico automático de preços.
+Quando a Amazon não entrega metadados, o nome é sugerido pelo trecho legível
+do link e preço/foto ficam para preenchimento manual; uma foto local de até
+10 MB pode ser reduzida para JPEG 360 × 360 e salva na wishlist da conta.
 O ZIP manual do piloto publica só arquivos estáticos e não instala Functions.
 Para ativar a análise, conectar o site Netlify existente ao GitHub na branch
 `feat/online-foundation` e usar o `netlify.toml` da branch para build/publish.
