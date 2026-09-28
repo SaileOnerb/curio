@@ -19,12 +19,15 @@ export default async function handler(req){
   if(!page.ok||!String(page.headers.get('content-type')||'').includes('text/html'))return response({error:'A loja não disponibilizou os dados. Preencha manualmente.'},422);
   const reader=page.body.getReader();let chunks=[],size=0;while(size<450000){let {value,done}=await reader.read();if(done)break;chunks.push(value);size+=value.byteLength}await reader.cancel();
   const html=new TextDecoder().decode(Buffer.concat(chunks.map(x=>Buffer.from(x))).subarray(0,450000)),structured=productJson(html),offer=Array.isArray(structured.offers)?structured.offers[0]:structured.offers||{};
-  const name=String(structured.name||meta(html,'og:title')||meta(html,'twitter:title')||'').replace(/\s+/g,' ').trim().slice(0,180);
+  let name=String(structured.name||meta(html,'og:title')||meta(html,'twitter:title')||'').replace(/\s+/g,' ').trim().slice(0,180);
+  if(/robot check|captcha|automated access|verificação de segurança/i.test(name)||/^amazon(?:\.com(?:\.br)?)?\s*$/i.test(name))name='';
+  let partial=false;
+  if(/amazon\./.test(url.hostname)&&!name){const slug=url.pathname.split('/').filter(Boolean).find(x=>x.toLowerCase()!=='dp'&&!/^[A-Z0-9]{10}$/i.test(x));if(slug&&slug.includes('-')){name=decodeURIComponent(slug).replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim().slice(0,180);partial=true}}
   const rawPrice=offer.price??meta(html,'product:price:amount')??meta(html,'og:price:amount');
   const currency=String(offer.priceCurrency||meta(html,'product:price:currency')||'').toUpperCase();
-  const image=cleanImage(Array.isArray(structured.image)?structured.image[0]:structured.image?.url||structured.image||meta(html,'og:image')||meta(html,'twitter:image'),url);
+  const image=!partial&&name?cleanImage(Array.isArray(structured.image)?structured.image[0]:structured.image?.url||structured.image||meta(html,'og:image')||meta(html,'twitter:image'),url):'';
   if(!name&&!image)return response({error:'A loja não forneceu nome ou foto. Preencha manualmente.'},422);
-  return response({name,image,price:currency==='BRL'&&rawPrice!==''&&rawPrice!=null&&Number.isFinite(Number(rawPrice))?Number(rawPrice):null,store:url.hostname});
+  return response({name,image,price:!partial&&currency==='BRL'&&rawPrice!==''&&rawPrice!=null&&Number.isFinite(Number(rawPrice))?Number(rawPrice):null,store:url.hostname,partial});
  }catch{return response({error:'Não foi possível consultar a loja agora. Preencha manualmente.'},422)}
 }
 export const config={path:'/api/product-preview'};
