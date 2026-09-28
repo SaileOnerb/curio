@@ -9,14 +9,20 @@
   const photos=new Map(),ids=new Map(),versions=new Map();
   let cache=null,photoRows=[],collectionRows=[],pendingImport=null,importing=false;
   const $=id=>document.getElementById(id);
-  function clearStoredSession(){try{localStorage.removeItem(SESSION_KEY)}catch{}}
-  function saveSession(){try{localStorage.setItem(SESSION_KEY,JSON.stringify({key,access_token:token,refresh_token:refreshToken,expires_at:expiresAt,user}))}catch{}}
+  function clearStoredSession(){for(const storage of [localStorage,sessionStorage])try{storage.removeItem(SESSION_KEY)}catch{}}
+  function storedSession(){for(const storage of [localStorage,sessionStorage])try{const value=storage.getItem(SESSION_KEY);if(value)return JSON.parse(value)}catch{}return null}
+  function saveSession(){
+    const value=JSON.stringify({key,access_token:token,refresh_token:refreshToken,expires_at:expiresAt,user});
+    let saved=false;
+    for(const storage of [localStorage,sessionStorage])try{storage.setItem(SESSION_KEY,value);if(storage.getItem(SESSION_KEY)===value)saved=true}catch{}
+    return saved;
+  }
   function scheduleRefresh(){clearTimeout(refreshTimer);if(!refreshToken||!user)return;refreshTimer=setTimeout(()=>{refreshSession().catch(()=>{})},Math.max(1000,expiresAt*1000-Date.now()-60000))}
   function acceptSession(data,proposedKey){
     if(!data.access_token||!data.refresh_token||!data.user?.id)throw Error('Sessão incompleta. Entre novamente.');
     key=proposedKey;token=data.access_token;refreshToken=data.refresh_token;user=data.user;
     expiresAt=Number(data.expires_at)||Math.floor(Date.now()/1000)+(Number(data.expires_in)||3600);
-    saveSession();scheduleRefresh();
+    const persisted=saveSession();scheduleRefresh();return persisted;
   }
   async function refreshSession(){
     if(refreshPromise)return refreshPromise;
@@ -429,7 +435,7 @@
     if(recoveryToken)clearStoredSession();
     if(!recoveryToken){
       try{
-        const saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+        const saved=storedSession();
         if(saved?.key?.startsWith('sb_publishable_')&&saved.refresh_token&&saved.user?.id){
           key=saved.key;token=saved.access_token||'';refreshToken=saved.refresh_token;user=saved.user;expiresAt=Number(saved.expires_at)||0;
           message('Restaurando sua sessão…');
@@ -482,9 +488,10 @@
         $('onlinePassword').value='';
         if(!response.ok)throw await authError(response,'Login recusado');
         const data=await response.json();if(!data.access_token||!data.user?.id)throw Error('Login incompleto.');
-        session++;acceptSession(data,proposedKey);
+        session++;const persisted=acceptSession(data,proposedKey);
         try{localStorage.setItem('curio-supabase-publishable-key',key)}catch{}
         await onReady();unlock();
+        if(!persisted)message('Seu navegador bloqueou o armazenamento da sessão. O F5 exigirá novo login.',true);
       }catch(e){message(e.message,true)}finally{button.disabled=false}
     };
     $('onlineLogout').onclick=()=>{
