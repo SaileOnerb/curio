@@ -371,12 +371,14 @@
     progress('Limpeza concluída.');
   }
   function lock(){
+    document.body.classList.remove('online-restoring');
     document.body.classList.add('online-locked');
     document.body.classList.remove('online-unlocked');
     $('onlineGate').hidden=false;
     $('onlineControls').hidden=true;
   }
   function unlock(){
+    document.body.classList.remove('online-restoring');
     document.body.classList.remove('online-locked');
     document.body.classList.add('online-unlocked');
     $('onlineGate').hidden=true;
@@ -401,6 +403,7 @@
   }
   async function start(onReady){
     lock();
+    document.body.classList.add('online-restoring');
     try{$('onlineKey').value=localStorage.getItem('curio-supabase-publishable-key')||''}catch{}
     if(!$('onlineKey').value)$('onlineKey').closest('details').open=true;
     let mode='login',recoveryToken='';
@@ -448,6 +451,7 @@
         message(error.invalidSession?'Sessão expirada. Entre novamente.':'Não foi possível restaurar agora. Confira a conexão e atualize a página.',true);
       }
     }
+    document.body.classList.remove('online-restoring');
     $('onlineLogin').onclick=async()=>{
       const button=$('onlineLogin');button.disabled=true;
       try{
