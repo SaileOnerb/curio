@@ -444,7 +444,8 @@ body.online-unlocked #settings .settingsBlock:nth-child(n+5){display:none!import
 #onlineGate #onlineMessage{font-size:12px;max-width:none;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}#onlineStatus{display:block;font-size:11px;color:#a8a8ad;margin-top:12px;line-height:1.4}
 #onlineProfileModal .onlineProfileForm{display:grid;gap:14px;margin-top:20px}#onlineProfileModal input[type=text],#onlineProfileModal input[type=file]{width:100%;margin-top:7px}#onlineProfileModal .onlineProfilePreview{display:flex;align-items:center;gap:15px}#onlineProfileModal .onlineAvatar{width:68px;height:68px;font-size:22px}#onlineProfileModal .onlineProfileActions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
 @media(max-width:700px){#onlineControls{top:10px;right:12px}#onlineProfileToggle{max-width:130px}#onlineProfilePanel{top:46px}}
-</style></head><body class="online-locked online-restoring"><div id="onlineGate"><div class="onlineLoginLayout"><div class="onlineBrand"><div class="onlineBrandMark"><img src="./icons/icon-192.svg" alt="Símbolo do CURIÓ"><div><strong>CURIÓ</strong><small>PERSONAL COLLECTION</small></div></div><h1>Sua coleção, sempre com você.</h1><p>Figuras, coleções, wishlist e finanças reunidas na sua conta. Entre para continuar de onde parou.</p><div class="onlineBrandRule" aria-hidden="true"></div></div><section class="onlineLoginCard" aria-label="Acesso à conta"><p class="eyebrow">BEM-VINDO DE VOLTA</p><h2 id="onlineAuthTitle">Entrar no CURIÓ</h2><p id="onlineAuthIntro">Acesse seus dados em qualquer dispositivo.</p><label id="onlineEmailWrap">E-mail<input id="onlineEmail" type="email" autocomplete="username" placeholder="seu@email.com"></label><label id="onlinePasswordWrap">Senha<input id="onlinePassword" type="password" autocomplete="current-password" placeholder="Sua senha"></label><label id="onlineConfirmWrap" hidden>Confirmar senha<input id="onlinePasswordConfirm" type="password" autocomplete="new-password" placeholder="Repita a senha"></label><button id="onlineLogin" type="button">Entrar</button><div class="onlineAuthLinks"><button id="onlineCreate" type="button">Criar conta</button><button id="onlineForgot" type="button">Esqueci minha senha</button><button id="onlineBack" type="button" hidden>Voltar ao login</button><button id="onlineResend" type="button" hidden>Reenviar confirmação</button></div><p id="onlineMessage" role="status" aria-live="polite"></p></section></div></div>
+</style><style id="curio-swipe-motion">@media(max-width:700px){.main[data-swipe-direction="next"] .view.on{animation:curioSwipeFromRight .28s cubic-bezier(.22,1,.36,1) both}.main[data-swipe-direction="previous"] .view.on{animation:curioSwipeFromLeft .28s cubic-bezier(.22,1,.36,1) both}@keyframes curioSwipeFromRight{from{opacity:.78;transform:translate3d(52px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}@keyframes curioSwipeFromLeft{from{opacity:.78;transform:translate3d(-52px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}}@media(prefers-reduced-motion:reduce){.main[data-swipe-direction] .view.on{animation:none!important}}</style>
+</head><body class="online-locked online-restoring"><div id="onlineGate"><div class="onlineLoginLayout"><div class="onlineBrand"><div class="onlineBrandMark"><img src="./icons/icon-192.svg" alt="Símbolo do CURIÓ"><div><strong>CURIÓ</strong><small>PERSONAL COLLECTION</small></div></div><h1>Sua coleção, sempre com você.</h1><p>Figuras, coleções, wishlist e finanças reunidas na sua conta. Entre para continuar de onde parou.</p><div class="onlineBrandRule" aria-hidden="true"></div></div><section class="onlineLoginCard" aria-label="Acesso à conta"><p class="eyebrow">BEM-VINDO DE VOLTA</p><h2 id="onlineAuthTitle">Entrar no CURIÓ</h2><p id="onlineAuthIntro">Acesse seus dados em qualquer dispositivo.</p><label id="onlineEmailWrap">E-mail<input id="onlineEmail" type="email" autocomplete="username" placeholder="seu@email.com"></label><label id="onlinePasswordWrap">Senha<input id="onlinePassword" type="password" autocomplete="current-password" placeholder="Sua senha"></label><label id="onlineConfirmWrap" hidden>Confirmar senha<input id="onlinePasswordConfirm" type="password" autocomplete="new-password" placeholder="Repita a senha"></label><button id="onlineLogin" type="button">Entrar</button><div class="onlineAuthLinks"><button id="onlineCreate" type="button">Criar conta</button><button id="onlineForgot" type="button">Esqueci minha senha</button><button id="onlineBack" type="button" hidden>Voltar ao login</button><button id="onlineResend" type="button" hidden>Reenviar confirmação</button></div><p id="onlineMessage" role="status" aria-live="polite"></p></section></div></div>
 <div id="onlineControls" hidden><button id="onlineProfileToggle" type="button" aria-label="Abrir perfil" aria-expanded="false"><span id="onlineAvatarSmall" class="onlineAvatar">C</span><span id="onlineAccount">Minha conta</span><svg class="profileChevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div id="onlineProfilePanel" hidden><div class="onlineProfileTop"><span id="onlineAvatarLarge" class="onlineAvatar">C</span><div><strong id="onlineProfileName">Minha conta</strong><small id="onlineProfileEmail"></small></div></div><button id="onlineProfileEdit" type="button">Editar perfil</button><button id="onlineRefresh" type="button">Atualizar dados</button><button id="onlineLogout" type="button">Sair da conta</button><span id="onlineStatus" role="status"></span></div></div>
 <div id="onlineProfileModal" class="modal"><div class="box small"><div class="modalhead"><div><p class="eyebrow">SUA CONTA</p><h2>Editar perfil</h2></div><button class="close" id="onlineProfileClose" type="button" aria-label="Fechar">×</button></div><div class="onlineProfileForm"><div class="onlineProfilePreview"><span id="onlineAvatarPreview" class="onlineAvatar">C</span><span class="muted">Sua foto aparece somente na sua conta.</span></div><label>Nome de usuário<input id="onlineProfileInput" type="text" maxlength="40" autocomplete="nickname" placeholder="Como quer ser chamado?"></label><label>Foto de perfil<input id="onlineAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"></label><button id="onlineAvatarRemove" class="secondary" type="button">Remover foto</button></div><div class="onlineProfileActions"><button id="onlineProfileCancel" class="secondary" type="button">Cancelar</button><button id="onlineProfileSave" class="primary" type="button">Salvar perfil</button></div></div></div>
 <script src="./online-data.js?v=20260928-maker-settings"></script><script id="curio-body-theme-boot">if(document.documentElement.classList.contains("dark"))document.body.classList.add("dark");document.body.classList.add("theme-ready");</script>
@@ -778,17 +779,27 @@ window.addEventListener("load",paintInstall);
 <script id="curio26js">
 (()=> {
  const qs=s=>document.querySelector(s), qsa=s=>[...document.querySelectorAll(s)];
- function showView(id){
+ let swipeAnimationTimer=null;
+ function showView(id,direction=0){
+   clearTimeout(swipeAnimationTimer);
+   if(direction)swipeArea.dataset.swipeDirection=direction>0?"next":"previous";
+   else delete swipeArea.dataset.swipeDirection;
    qsa(".view").forEach(v=>v.classList.remove("on"));
    const v=qs("#"+id); if(v)v.classList.add("on");
    qsa(".nav[data-v]").forEach(b=>b.classList.toggle("on",b.dataset.v===id));
    qsa(".mnav").forEach(b=>b.classList.toggle("on",b.dataset.mv===id));
    try{ if(typeof renderView==="function") renderView(id); }catch(e){}
-   window.scrollTo({top:0,behavior:"smooth"});
+   window.scrollTo({top:0,behavior:direction?"instant":"smooth"});
+   if(direction)swipeAnimationTimer=setTimeout(()=>delete swipeArea.dataset.swipeDirection,320);
  }
  qsa(".mnav").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mv)));
  const swipeArea=qs(".main"),tabs=["home","collection","wishlist","finance","settings"];
  let swipeStart=null;
+ function releaseSwipe(start,animate){
+   const view=start?.view;if(!view)return;
+   if(animate){view.style.transition="transform .2s cubic-bezier(.22,1,.36,1),opacity .2s ease";view.style.transform="";view.style.opacity="";setTimeout(()=>{view.style.transition="";view.style.willChange=""},220)}
+   else{view.style.transform="";view.style.opacity="";view.style.transition="";view.style.willChange=""}
+ }
  swipeArea?.addEventListener("touchstart",e=>{
    swipeStart=null;
    if(e.touches.length!==1||!matchMedia("(max-width:700px)").matches||!document.body.classList.contains("online-unlocked")||qs(".modal.on")||qs("#photoLightbox.on")||qs("#bulkBar.on"))return;
@@ -796,19 +807,26 @@ window.addEventListener("load",paintInstall);
    if(target.closest('button,a,input,select,textarea,[contenteditable="true"],.toolbar,.gallery,.choiceGrid,.bulkBar,.formactions,.lightbox'))return;
    for(let el=target;el&&el!==swipeArea;el=el.parentElement){let style=getComputedStyle(el);if(["auto","scroll"].includes(style.overflowX)&&el.scrollWidth>el.clientWidth+8)return}
    let touch=e.touches[0];if(touch.clientX<25||touch.clientX>innerWidth-25)return;
-   swipeStart={x:touch.clientX,y:touch.clientY,time:Date.now()};
+   swipeStart={x:touch.clientX,y:touch.clientY,time:Date.now(),view:swipeArea.querySelector(".view.on"),horizontal:false};
  },{passive:true});
+ swipeArea?.addEventListener("touchmove",e=>{
+   if(!swipeStart||e.touches.length!==1)return;
+   const start=swipeStart,touch=e.touches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
+   if(!start.horizontal){if(Math.abs(dy)>Math.abs(dx)*1.2&&Math.abs(dy)>12){swipeStart=null;return}if(Math.abs(dx)<12||Math.abs(dx)<Math.abs(dy)*1.4)return;start.horizontal=true;start.view?.style.setProperty("will-change","transform,opacity")}
+   if(e.cancelable)e.preventDefault();
+   if(start.view){start.view.style.transform=`translate3d(${Math.max(-52,Math.min(52,dx*.35))}px,0,0)`;start.view.style.opacity=String(1-Math.min(.12,Math.abs(dx)/900))}
+ },{passive:false});
  swipeArea?.addEventListener("touchend",e=>{
    if(!swipeStart||e.changedTouches.length!==1)return;
    const start=swipeStart;swipeStart=null;
-   if(qs(".modal.on")||qs("#photoLightbox.on")||qs("#bulkBar.on")||Date.now()-start.time>650)return;
    const touch=e.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
-   if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.5||Math.abs(dy)>80)return;
    const current=tabs.findIndex(id=>qs("#"+id)?.classList.contains("on")),next=current+(dx<0?1:-1);
-   if(current<0||next<0||next>=tabs.length)return;
-   if(e.cancelable)e.preventDefault();showView(tabs[next]);
+   const valid=start.horizontal&&!qs(".modal.on")&&!qs("#photoLightbox.on")&&!qs("#bulkBar.on")&&Date.now()-start.time<800&&Math.abs(dx)>=70&&Math.abs(dx)>Math.abs(dy)*1.5&&Math.abs(dy)<80&&current>=0&&next>=0&&next<tabs.length;
+   releaseSwipe(start,!valid);
+   if(!valid)return;
+   if(e.cancelable)e.preventDefault();showView(tabs[next],dx<0?1:-1);
  },{passive:false});
- swipeArea?.addEventListener("touchcancel",()=>swipeStart=null,{passive:true});
+ swipeArea?.addEventListener("touchcancel",()=>{releaseSwipe(swipeStart,true);swipeStart=null},{passive:true});
 
  const lb=qs("#photoLightbox"), img=lb.querySelector(".lb-img"), count=lb.querySelector(".lb-count");
  let photos=[], pos=0, scale=1, startX=0, lastTap=0, pinchStart=0, baseScale=1;
