@@ -9,7 +9,7 @@
   let refreshToken='',expiresAt=0,refreshTimer=null,refreshPromise=null;
   const photos=new Map(),photoPending=new Map(),ids=new Map(),versions=new Map();
   let cache=null,photoRows=[],collectionRows=[],pendingImport=null,importing=false;
-  let photoLoadPromise=null,readGeneration=0;
+  let readGeneration=0,coverQueue=[],coverActive=0,coverSeen=new Set(),coverByUuid=new Map(),coverCallback=()=>{};
   const $=id=>document.getElementById(id);
   function clearStoredSession(){for(const storage of [localStorage,sessionStorage])try{storage.removeItem(SESSION_KEY)}catch{}}
   function storedSession(){for(const storage of [localStorage,sessionStorage])try{const value=storage.getItem(SESSION_KEY);if(value)return JSON.parse(value)}catch{}return null}
@@ -73,7 +73,7 @@
   async function saveSettings(obj){
     if(!user)throw Error('Entre na conta.');
     const found=(await list('user_settings')).find(s=>s.owner_id===user.id);
-    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','hiddenMakers','profileName','profileAvatar','tourCompleted'];
+    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','hiddenMakers','profileName','profileAvatar','tourCompleted','collectionLayout','collectionColumns'];
     const next={...(found?.data||{})};
     for(const name of allowed)if(Object.prototype.hasOwnProperty.call(obj,name))next[name]=obj[name];
     const method=found?'PATCH':'POST';
@@ -110,6 +110,7 @@
       await Promise.all(['figures','collections','wishlist','figure_collections','figure_photos','user_settings'].map(list));
     if(current!==session)throw Error('Sessão alterada durante a leitura.');
     ids.clear();versions.clear();photoRows=remotePhotos;collectionRows=remoteCollections;
+    coverQueue=[];coverSeen.clear();coverByUuid=new Map(remotePhotos.filter(p=>p.kind==='cover').map(p=>[p.figure_id,p]));
     const groupById=new Map(remoteCollections.map((row,i)=>{
       const localId=numericId(row,i,'groups');ids.set('groups:'+localId,row.id);
       return [row.id,{id:localId,name:row.name}]
@@ -133,35 +134,33 @@
     });
     const settings={...(remoteSettings.find(s=>s.owner_id===user.id)?.data||{})};
     if(current!==session)throw Error('Sessão alterada durante a leitura.');
-    message(figures.length+' figuras prontas. Carregando fotos em segundo plano…');
-    cache={figures,groups,wishlist,settings};photoLoadPromise=null;
+    message(figures.length+' figuras prontas. Fotos carregadas conforme a visualização.');
+    cache={figures,groups,wishlist,settings};
     return cache;
   }
   function loadPhotos(onBatch=()=>{}){
-    if(photoLoadPromise)return photoLoadPromise;
-    const current=session,generation=readGeneration,activeCache=cache;
-    const figureById=new Map(activeCache.figures.map(f=>[f.id,f]));
-    const figureByUuid=new Map([...ids].filter(([k])=>k.startsWith('figures:')).map(([k,uuid])=>[uuid,figureById.get(Number(k.slice(8)))]));
-    const rank=p=>p.kind==='cover'?0:p.kind==='gallery'?1:2;
-    const newest=p=>Number(figureByUuid.get(p.figure_id)?.created)||0;
-    const jobs=[...photoRows].sort((a,b)=>rank(a)-rank(b)||newest(b)-newest(a)||(a.position||0)-(b.position||0));
-    const changedCovers=new Set();
-    const notifyCovers=()=>{if(changedCovers.size){onBatch([...changedCovers]);changedCovers.clear()}};
-    photoLoadPromise=mapLimit(jobs,6,async p=>{
-      if(current!==session||generation!==readGeneration)throw Error('Leitura de fotos interrompida.');
-      const f=figureByUuid.get(p.figure_id);if(!f)return;
-      let src;
-      try{src=await photo(p.storage_path)}
-      catch(error){if(!photoRows.some(row=>row.id===p.id&&row.storage_path===p.storage_path))return;throw error}
-      if(current!==session||generation!==readGeneration)return;
-      if(!photoRows.some(row=>row.id===p.id&&row.storage_path===p.storage_path))return;
-      if(p.kind==='cover')f.cover=src;
-      else if(p.kind==='original')f.coverOriginal=src;
-      else if(p.kind==='gallery')f.gallery[p.position]=src;
-      if(p.kind==='cover'){changedCovers.add(f.id);if(changedCovers.size>=6)notifyCovers()}
-    }).then(()=>{if(current!==session||generation!==readGeneration)return;for(const f of activeCache.figures)f.gallery=f.gallery.filter(Boolean);notifyCovers();message(activeCache.figures.length+' figuras e '+jobs.length+' fotos carregadas.');})
-      .catch(error=>{if(current===session&&generation===readGeneration)message('Algumas fotos não carregaram. Use Atualizar dados.',true);throw error});
-    return photoLoadPromise;
+    coverCallback=onBatch;
+    return Promise.resolve();
+  }
+  function pumpCovers(){
+    while(coverActive<4&&coverQueue.length){
+      const {p,f,current,generation}=coverQueue.shift();coverActive++;
+      photo(p.storage_path).then(src=>{
+        if(current!==session||generation!==readGeneration||!photoRows.some(row=>row.id===p.id&&row.storage_path===p.storage_path))return;
+        f.cover=src;coverCallback([f.id]);
+      }).catch(error=>{if(current===session&&generation===readGeneration){coverSeen.delete(p.id);console.warn('Capa não carregada',error)}})
+        .finally(()=>{coverActive--;pumpCovers()});
+    }
+  }
+  function loadCovers(figureIds){
+    if(!user||!cache)return;
+    const current=session,generation=readGeneration,figuresById=new Map(cache.figures.map(f=>[f.id,f]));
+    for(const id of figureIds){
+      const f=figuresById.get(id),uuid=ids.get('figures:'+id),p=coverByUuid.get(uuid);
+      if(!f||f.cover||!p||coverSeen.has(p.id))continue;
+      coverSeen.add(p.id);coverQueue.push({p,f,current,generation});
+    }
+    pumpCovers();
   }
   async function loadFigurePhotos(id){
     const current=session,generation=readGeneration,uuid=ids.get('figures:'+id),f=cache?.figures.find(row=>row.id===id);
@@ -175,6 +174,7 @@
       else if(p.kind==='gallery')f.gallery[p.position]=src;
     });
     f.gallery=f.gallery.filter(Boolean);
+    if(f.cover)coverCallback([id]);
     return f;
   }
   function authHeaders(extra={}){return {apikey:key,Authorization:'Bearer '+token,...extra}}
@@ -433,6 +433,7 @@
     document.body.classList.add('online-unlocked');
     $('onlineGate').hidden=true;
     $('onlineControls').hidden=false;
+    window.curioObserveCovers?.();
   }
   async function authError(response,action){
     let body={};try{body=await response.json()}catch{}
@@ -559,6 +560,6 @@
       if(!document.hidden&&user&&refreshToken&&Date.now()>expiresAt*1000-60000)refreshSession().catch(()=>message('Sessão expirada. Entre novamente.',true));
     });
   }
-  window.curioRemote={start,read,loadPhotos,loadFigurePhotos,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},previewAuth:()=>user?{Authorization:'Bearer '+token,apikey:key}:{},
+  window.curioRemote={start,read,loadPhotos,loadCovers,loadFigurePhotos,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},previewAuth:()=>user?{Authorization:'Bearer '+token,apikey:key}:{},
     write,remove};
 })();
