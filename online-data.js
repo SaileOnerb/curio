@@ -140,9 +140,13 @@
   function loadPhotos(onBatch=()=>{}){
     if(photoLoadPromise)return photoLoadPromise;
     const current=session,generation=readGeneration,activeCache=cache;
-    const figureByUuid=new Map([...ids].filter(([k])=>k.startsWith('figures:')).map(([k,uuid])=>[uuid,activeCache.figures.find(f=>f.id===Number(k.slice(8)))]));
-    const jobs=[...photoRows].sort((a,b)=>(a.kind==='cover'?0:1)-(b.kind==='cover'?0:1));
-    let completed=0;
+    const figureById=new Map(activeCache.figures.map(f=>[f.id,f]));
+    const figureByUuid=new Map([...ids].filter(([k])=>k.startsWith('figures:')).map(([k,uuid])=>[uuid,figureById.get(Number(k.slice(8)))]));
+    const rank=p=>p.kind==='cover'?0:p.kind==='gallery'?1:2;
+    const newest=p=>Number(figureByUuid.get(p.figure_id)?.created)||0;
+    const jobs=[...photoRows].sort((a,b)=>rank(a)-rank(b)||newest(b)-newest(a)||(a.position||0)-(b.position||0));
+    const changedCovers=new Set();
+    const notifyCovers=()=>{if(changedCovers.size){onBatch([...changedCovers]);changedCovers.clear()}};
     photoLoadPromise=mapLimit(jobs,6,async p=>{
       if(current!==session||generation!==readGeneration)throw Error('Leitura de fotos interrompida.');
       const f=figureByUuid.get(p.figure_id);if(!f)return;
@@ -154,9 +158,8 @@
       if(p.kind==='cover')f.cover=src;
       else if(p.kind==='original')f.coverOriginal=src;
       else if(p.kind==='gallery')f.gallery[p.position]=src;
-      completed++;
-      if(p.kind==='cover'&&(completed%8===0||completed===jobs.length))onBatch();
-    }).then(()=>{if(current!==session||generation!==readGeneration)return;for(const f of activeCache.figures)f.gallery=f.gallery.filter(Boolean);onBatch();message(activeCache.figures.length+' figuras e '+jobs.length+' fotos carregadas.');})
+      if(p.kind==='cover'){changedCovers.add(f.id);if(changedCovers.size>=6)notifyCovers()}
+    }).then(()=>{if(current!==session||generation!==readGeneration)return;for(const f of activeCache.figures)f.gallery=f.gallery.filter(Boolean);notifyCovers();message(activeCache.figures.length+' figuras e '+jobs.length+' fotos carregadas.');})
       .catch(error=>{if(current===session&&generation===readGeneration)message('Algumas fotos não carregaram. Use Atualizar dados.',true);throw error});
     return photoLoadPromise;
   }
