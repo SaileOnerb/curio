@@ -7,8 +7,9 @@
   let key='',token='',user=null,session=0;
   const SESSION_KEY='curio-online-session-v1';
   let refreshToken='',expiresAt=0,refreshTimer=null,refreshPromise=null;
-  const photos=new Map(),ids=new Map(),versions=new Map();
+  const photos=new Map(),photoPending=new Map(),ids=new Map(),versions=new Map();
   let cache=null,photoRows=[],collectionRows=[],pendingImport=null,importing=false;
+  let photoLoadPromise=null,readGeneration=0;
   const $=id=>document.getElementById(id);
   function clearStoredSession(){for(const storage of [localStorage,sessionStorage])try{storage.removeItem(SESSION_KEY)}catch{}}
   function storedSession(){for(const storage of [localStorage,sessionStorage])try{const value=storage.getItem(SESSION_KEY);if(value)return JSON.parse(value)}catch{}return null}
@@ -72,7 +73,7 @@
   async function saveSettings(obj){
     if(!user)throw Error('Entre na conta.');
     const found=(await list('user_settings')).find(s=>s.owner_id===user.id);
-    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','hiddenMakers','profileName','profileAvatar'];
+    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','hiddenMakers','profileName','profileAvatar','tourCompleted'];
     const next={...(found?.data||{})};
     for(const name of allowed)if(Object.prototype.hasOwnProperty.call(obj,name))next[name]=obj[name];
     const method=found?'PATCH':'POST';
@@ -87,8 +88,12 @@
   }
   async function photo(path){
     if(photos.has(path))return photos.get(path);
-    const blob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+path);
-    const url=URL.createObjectURL(blob);photos.set(path,url);return url;
+    if(photoPending.has(path))return photoPending.get(path);
+    const pending=(async()=>{
+      const blob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+path);
+      const url=URL.createObjectURL(blob);photos.set(path,url);return url;
+    })().finally(()=>photoPending.delete(path));
+    photoPending.set(path,pending);return pending;
   }
   async function mapLimit(items,limit,fn){
     let cursor=0,firstError=null;
@@ -99,7 +104,7 @@
   }
   async function read(){
     if(!user)throw Error('Entre na conta.');
-    const current=session;
+    const current=session,generation=++readGeneration;
     message('Lendo a coleção online…');
     const [remoteFigures,remoteCollections,remoteWish,remoteLinks,remotePhotos,remoteSettings]=
       await Promise.all(['figures','collections','wishlist','figure_collections','figure_photos','user_settings'].map(list));
@@ -122,24 +127,52 @@
       return {...row.data,id:localId,name:row.name,
         groups:groupNames.get(row.id)||[],cover:'',coverOriginal:'',gallery:[]}
     });
-    const figureByUuid=new Map(remoteFigures.map((r,i)=>[r.id,figures[i]]));
-    await mapLimit(remotePhotos,5,async(p,index)=>{
-      const f=figureByUuid.get(p.figure_id);if(!f)return;
-      const src=await photo(p.storage_path);
-      if(p.kind==='cover')f.cover=src;
-      else if(p.kind==='original')f.coverOriginal=src;
-      else if(p.kind==='gallery')f.gallery[p.position]=src;
-      message('Carregando fotos: '+(index+1)+' de '+remotePhotos.length);
-    });
-    for(const f of figures)f.gallery=f.gallery.filter(Boolean);
     const wishlist=remoteWish.map((row,i)=>{
       const localId=numericId(row,i,'wishlist');ids.set('wishlist:'+localId,row.id);versions.set(row.id,row.updated_at);
       return {...row.data,id:localId}
     });
     const settings={...(remoteSettings.find(s=>s.owner_id===user.id)?.data||{})};
     if(current!==session)throw Error('Sessão alterada durante a leitura.');
-    message(figures.length+' figuras e '+remotePhotos.length+' fotos carregadas.');
-    cache={figures,groups,wishlist,settings};return cache;
+    message(figures.length+' figuras prontas. Carregando fotos em segundo plano…');
+    cache={figures,groups,wishlist,settings};photoLoadPromise=null;
+    return cache;
+  }
+  function loadPhotos(onBatch=()=>{}){
+    if(photoLoadPromise)return photoLoadPromise;
+    const current=session,generation=readGeneration,activeCache=cache;
+    const figureByUuid=new Map([...ids].filter(([k])=>k.startsWith('figures:')).map(([k,uuid])=>[uuid,activeCache.figures.find(f=>f.id===Number(k.slice(8)))]));
+    const jobs=[...photoRows].sort((a,b)=>(a.kind==='cover'?0:1)-(b.kind==='cover'?0:1));
+    let completed=0;
+    photoLoadPromise=mapLimit(jobs,6,async p=>{
+      if(current!==session||generation!==readGeneration)throw Error('Leitura de fotos interrompida.');
+      const f=figureByUuid.get(p.figure_id);if(!f)return;
+      let src;
+      try{src=await photo(p.storage_path)}
+      catch(error){if(!photoRows.some(row=>row.id===p.id&&row.storage_path===p.storage_path))return;throw error}
+      if(current!==session||generation!==readGeneration)return;
+      if(!photoRows.some(row=>row.id===p.id&&row.storage_path===p.storage_path))return;
+      if(p.kind==='cover')f.cover=src;
+      else if(p.kind==='original')f.coverOriginal=src;
+      else if(p.kind==='gallery')f.gallery[p.position]=src;
+      completed++;
+      if(p.kind==='cover'&&(completed%8===0||completed===jobs.length))onBatch();
+    }).then(()=>{if(current!==session||generation!==readGeneration)return;for(const f of activeCache.figures)f.gallery=f.gallery.filter(Boolean);onBatch();message(activeCache.figures.length+' figuras e '+jobs.length+' fotos carregadas.');})
+      .catch(error=>{if(current===session&&generation===readGeneration)message('Algumas fotos não carregaram. Use Atualizar dados.',true);throw error});
+    return photoLoadPromise;
+  }
+  async function loadFigurePhotos(id){
+    const current=session,generation=readGeneration,uuid=ids.get('figures:'+id),f=cache?.figures.find(row=>row.id===id);
+    if(!uuid||!f)throw Error('Figura não encontrada. Atualize os dados.');
+    await mapLimit(photoRows.filter(p=>p.figure_id===uuid),4,async p=>{
+      const src=await photo(p.storage_path);
+      if(current!==session||generation!==readGeneration)throw Error('Leitura alterada.');
+      if(!photoRows.some(row=>row.id===p.id&&row.storage_path===p.storage_path))return;
+      if(p.kind==='cover')f.cover=src;
+      else if(p.kind==='original')f.coverOriginal=src;
+      else if(p.kind==='gallery')f.gallery[p.position]=src;
+    });
+    f.gallery=f.gallery.filter(Boolean);
+    return f;
   }
   function authHeaders(extra={}){return {apikey:key,Authorization:'Bearer '+token,...extra}}
   async function mutation(table,method,payload,filter=''){
@@ -193,6 +226,7 @@
     for(const id of desired)if(!old.some(c=>c.collection_id===id))await mutation('figure_collections','POST',{owner_id:user.id,figure_id:uuid,collection_id:id});
   }
   async function writeFigure(obj){
+    if(ids.has('figures:'+obj.id)&&photoRows.length)await loadFigurePhotos(obj.id);
     const uuid=ids.get('figures:'+obj.id),old=cache.figures.find(f=>f.id===obj.id);
     const data=dataOnly(obj,['id','name','groups','cover','coverOriginal','gallery']);let row;
     if(uuid){row=(await mutation('figures','PATCH',{name:obj.name,data,updated_at:new Date().toISOString()},'?id=eq.'+uuid+'&updated_at=eq.'+encodeURIComponent(versions.get(uuid))))[0];if(!row)throw Error('Figura alterada em outro dispositivo. Atualize antes de editar.');}
@@ -212,6 +246,7 @@
     if(!user||!cache)throw Error('Entre na conta.');
     const table={figures:'figures',groups:'collections',wishlist:'wishlist'}[store];if(!table)throw Error('Operação indisponível.');
     const uuid=ids.get(store+':'+id);if(!uuid)throw Error('Registro não encontrado. Atualize a página.');
+    if(store==='figures'&&photoRows.length)await loadFigurePhotos(id);
     if(store==='figures')for(const p of photoRows.filter(x=>x.figure_id===uuid))await storageDelete(p.storage_path);
     const rows=await mutation(table,'DELETE',undefined,'?id=eq.'+uuid);
     if(rows.length!==1)throw Error('Registro alterado em outro dispositivo. Atualize a página.');
@@ -231,23 +266,27 @@
     const figs=fs.map((f,i)=>({...f.data,id:numericId(f,i,'figures'),name:f.name,groups:[],cover:'',coverOriginal:'',gallery:[]}));
     const figureMap=new Map(fs.map((f,i)=>[f.id,figs[i]]));
     for(const link of links){const f=figureMap.get(link.figure_id),g=groupMap.get(link.collection_id);if(!f||!g)throw Error('Vínculo incompleto.');if(!f.groups.includes(g.name))f.groups.push(g.name)}
-    for(let i=0;i<ps.length;i++){
+    let downloaded=0;
+    await mapLimit(ps,6,async p=>{
       if(current!==session)throw Error('Sessão alterada.');
-      const p=ps[i],f=figureMap.get(p.figure_id);if(!f)throw Error('Foto sem figura.');
+      const f=figureMap.get(p.figure_id);if(!f)throw Error('Foto sem figura.');
       const blob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+p.storage_path);
       if(!(blob instanceof Blob)||!blob.size||!['image/jpeg','image/png','image/webp'].includes(blob.type))throw Error('Foto inválida: '+p.storage_path);
       const src=await asDataUrl(blob);
       if(p.kind==='cover')f.cover=src;else if(p.kind==='original')f.coverOriginal=src;else if(p.kind==='gallery')f.gallery[p.position]=src;else throw Error('Tipo de foto inválido.');
-      progress('Baixando fotos: '+(i+1)+' de '+ps.length);
-    }
+      progress('Baixando fotos: '+(++downloaded)+' de '+ps.length);
+    });
     for(const f of figs){if(Array.from({length:f.gallery.length},(_,i)=>!f.gallery[i]).some(Boolean))throw Error('Galeria incompleta.');f.gallery=f.gallery.filter(Boolean)}
     const {migrationFingerprint,migrationStartedAt,migrationCompletedAt,...prefs}=ss.find(x=>x.owner_id===owner)?.data||{};
     const data={format:'curio-backup',formatVersion:1,appVersion:'online-pilot',exportedAt:new Date().toISOString(),figures:figs,wishlist:ws.map((w,i)=>({...w.data,id:numericId(w,i,'wishlist')})),groups,settings:{...prefs,id:'main'}};
     const json=JSON.stringify(data),check=JSON.parse(json);
     if(check.figures.length!==fs.length||check.groups.length!==cs.length||check.wishlist.length!==ws.length)throw Error('Conferência do backup falhou.');
     if(current!==session)throw Error('Sessão alterada.');
-    const url=URL.createObjectURL(new Blob([json],{type:'application/json'})),link=document.createElement('a');
-    link.href=url;link.download='curio-online-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    const source=new Blob([json],{type:'application/json'});
+    const compressed=typeof CompressionStream==='function';
+    const file=compressed?await new Response(source.stream().pipeThrough(new CompressionStream('gzip'))).blob():source;
+    const url=URL.createObjectURL(file),link=document.createElement('a');
+    link.href=url;link.download='curio-online-backup-'+new Date().toISOString().slice(0,10)+(compressed?'.json.gz':'.json');document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
     return {figures:fs.length,photos:ps.length};
   }
   const importId=x=>String(x?.id??'');
@@ -283,8 +322,15 @@
   async function digest(data){const bytes=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('')}
   async function prepareImport(file){
     if(!user)throw Error('Entre na conta.');
-    if(!file||file.size>100*1048576)throw Error('Escolha um JSON de até 100 MB.');
-    const current=session,raw=await file.arrayBuffer();
+    if(!file||file.size>100*1048576)throw Error('Escolha um backup JSON ou JSON.GZ de até 100 MB.');
+    const current=session,packed=await file.arrayBuffer();
+    const gzip=new Uint8Array(packed,0,Math.min(2,packed.byteLength));
+    const compressed=gzip[0]===0x1f&&gzip[1]===0x8b;
+    if(compressed&&typeof DecompressionStream!=='function')throw Error('Este navegador não abre backups compactados. Use um navegador atualizado.');
+    let raw;
+    try{raw=compressed?await new Response(new Blob([packed]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer():packed}
+    catch{throw Error('Não foi possível descompactar o backup.')}
+    if(raw.byteLength>300*1048576)throw Error('Backup descompactado acima do limite de 300 MB.');
     let backup;try{backup=JSON.parse(new TextDecoder().decode(raw))}catch{throw Error('JSON inválido.');}
     const manifest=inspectBackup(backup),fingerprint=await digest(raw);
     if(current!==session)throw Error('Sessão alterada.');
@@ -443,7 +489,7 @@
           message('Restaurando sua sessão…');
           if(!token||Date.now()>expiresAt*1000-60000)await refreshSession();
           else scheduleRefresh();
-          try{await onReady();unlock()}catch(error){unlock();message('Sessão restaurada. Falha ao atualizar: '+error.message,true)}
+          try{await onReady();unlock();window.curioMaybeTour?.()}catch(error){unlock();message('Sessão restaurada. Falha ao atualizar: '+error.message,true)}
         }
       }catch(error){
         if(user){clearTimeout(refreshTimer);token='';user=null;lock()}
@@ -489,7 +535,7 @@
         if(!response.ok)throw await authError(response,'Login recusado');
         const data=await response.json();if(!data.access_token||!data.user?.id)throw Error('Login incompleto.');
         session++;const persisted=acceptSession(data,proposedKey);
-        await onReady();unlock();
+        await onReady();unlock();window.curioMaybeTour?.();
         if(!persisted)message('Seu navegador bloqueou o armazenamento da sessão. O F5 exigirá novo login.',true);
       }catch(e){message(e.message,true)}finally{button.disabled=false}
     };
@@ -510,6 +556,6 @@
       if(!document.hidden&&user&&refreshToken&&Date.now()>expiresAt*1000-60000)refreshSession().catch(()=>message('Sessão expirada. Entre novamente.',true));
     });
   }
-  window.curioRemote={start,read,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},previewAuth:()=>user?{Authorization:'Bearer '+token,apikey:key}:{},
+  window.curioRemote={start,read,loadPhotos,loadFigurePhotos,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},previewAuth:()=>user?{Authorization:'Bearer '+token,apikey:key}:{},
     write,remove};
 })();
