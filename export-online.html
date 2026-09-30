@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CURIÓ — backup da conta online</title>
+<style>
+:root{color-scheme:dark;font:16px system-ui;background:#0e151e;color:#eef4fa}
+*{box-sizing:border-box}body{max-width:760px;margin:auto;padding:28px 16px}
+section{background:#192532;border:1px solid #3c4b5b;border-radius:16px;padding:18px;margin:18px 0}
+.muted{color:#b8c8d7;line-height:1.5}label{display:block;margin:12px 0}
+input{display:block;width:100%;margin-top:5px;padding:11px;background:#111d2a;border:1px solid #607184;border-radius:9px;color:white;font:inherit}
+button{padding:11px 16px;border:0;border-radius:9px;background:#92d8b4;color:#12251b;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}.hidden{display:none}.bad{color:#ffa8a8}.good{color:#9de3b8}
+progress{width:100%;height:14px}
+</style>
+<h1>CURIÓ · backup da conta online</h1>
+<p class="muted">Exporta os registros e baixa cada foto da sua conta do Supabase para montar um JSON recuperável. Nenhum dado do servidor ou do aparelho é alterado.</p>
+<section id="auth">
+  <label>Chave publicável <input id="key" autocomplete="off" placeholder="sb_publishable_..."></label>
+  <label>E-mail <input id="email" type="email" autocomplete="username"></label>
+  <label>Senha <input id="password" type="password" autocomplete="current-password"></label>
+  <button id="login">Entrar</button>
+</section>
+<section id="exportBox" class="hidden">
+  <p id="account"></p>
+  <button id="export">Gerar backup JSON completo</button>
+  <p class="muted">Aguarde até o download terminar. Depois confira o arquivo na pasta Downloads e guarde uma segunda cópia fora do navegador.</p>
+  <progress id="bar" max="1" value="0"></progress><p id="progress"></p>
+</section>
+<p id="message" role="status" aria-live="polite"></p>
+<script>
+(() => {
+  'use strict';
+  const BASE='https://xyuqdpenhnlwnplisxjh.supabase.co',BUCKET='figure-photos';
+  const $=id=>document.getElementById(id);
+  let key='',token='',user=null;
+  const say=(s,error=false)=>{$('message').textContent=s;$('message').className=error?'bad':'good'};
+  async function api(url){
+    const r=await fetch(BASE+url,{headers:{apikey:key,Authorization:'Bearer '+token},cache:'no-store'});
+    if(!r.ok){let detail='';try{detail=(await r.json()).message||''}catch{}
+      throw Error('HTTP '+r.status+(detail?': '+detail:''));}
+    return (r.headers.get('content-type')||'').includes('application/json')?r.json():r.blob();
+  }
+  async function all(table){
+    const results=[];
+    for(let offset=0;;offset+=500){
+      const batch=await api('/rest/v1/'+table+'?select=*&limit=500&offset='+offset);
+      if(!Array.isArray(batch))throw Error('Resposta inválida em '+table);
+      results.push(...batch);if(batch.length<500)return results;
+    }
+  }
+  function numericId(legacy,used,index){
+    const n=Number(legacy);
+    if(legacy!=null&&String(n)===String(legacy)&&Number.isSafeInteger(n)&&n>0&&!used.has(n)){
+      used.add(n);return n;
+    }
+    let candidate=1700000000000+index;
+    while(used.has(candidate))candidate++;
+    used.add(candidate);return candidate;
+  }
+  function asDataUrl(blob){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(reader.result);
+      reader.onerror=()=>reject(reader.error||Error('Falha ao ler foto'));
+      reader.readAsDataURL(blob);
+    });
+  }
+  async function build(){
+    say('Lendo registros da conta…');
+    const [figures,collections,wishlist,links,photos,settings]=await Promise.all(
+      ['figures','collections','wishlist','figure_collections','figure_photos','user_settings'].map(all));
+    const count=photos.length;
+    $('bar').max=Math.max(count,1);$('bar').value=0;
+    const figureIds=new Set(),groupIds=new Set(),wishIds=new Set();
+    const mappedGroups=new Map(collections.map((g,i)=>[g.id,{id:numericId(g.legacy_id,groupIds,i),name:g.name}]));
+    const mappedFigures=new Map(figures.map((f,i)=>[f.id,{
+      ...(f.data||{}),id:numericId(f.legacy_id,figureIds,i),name:f.name,
+      groups:[],cover:'',coverOriginal:'',gallery:[]
+    }]));
+    for(const link of links){
+      const f=mappedFigures.get(link.figure_id),g=mappedGroups.get(link.collection_id);
+      if(!f||!g)throw Error('Vínculo órfão entre figura e coleção.');
+      if(!f.groups.includes(g.name))f.groups.push(g.name);
+    }
+    let done=0;
+    for(const p of photos){
+      const f=mappedFigures.get(p.figure_id);
+      if(!f)throw Error('Foto sem figura: '+p.id);
+      const blob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+p.storage_path);
+      if(!(blob instanceof Blob)||!blob.size)throw Error('Foto vazia: '+p.storage_path);
+      const src=await asDataUrl(blob);
+      if(!/^data:image\/(jpeg|png|webp);base64,/.test(src))
+        throw Error('Formato inesperado da foto: '+p.storage_path);
+      if(p.kind==='cover')f.cover=src;
+      else if(p.kind==='original')f.coverOriginal=src;
+      else if(p.kind==='gallery')f.gallery[p.position]=src;
+      else throw Error('Tipo desconhecido de foto: '+p.kind);
+      $('bar').value=++done;$('progress').textContent=done+' de '+count+' fotos baixadas';
+    }
+    for(const f of mappedFigures.values()){
+      if(Array.from({length:f.gallery.length},(_,i)=>!f.gallery[i]).some(Boolean))
+        throw Error('Galeria incompleta em '+f.name);
+      f.gallery=f.gallery.filter(Boolean);
+    }
+    const exportedWish=wishlist.map((w,i)=>({
+      ...(w.data||{}),id:numericId(w.legacy_id,wishIds,i)
+    }));
+    const remoteSettings=settings.find(s=>s.owner_id===user.id)?.data||{};
+    const {migrationFingerprint,migrationStartedAt,migrationCompletedAt,...preferences}=remoteSettings;
+    return {
+      format:'curio-backup',formatVersion:1,appVersion:'online-pilot',
+      exportedAt:new Date().toISOString(),
+      figures:[...mappedFigures.values()],
+      wishlist:exportedWish,groups:[...mappedGroups.values()],
+      settings:{...preferences,id:'main'}
+    };
+  }
+  $('login').onclick=async()=>{
+    const btn=$('login');btn.disabled=true;
+    try{
+      key=$('key').value.trim();if(!key.startsWith('sb_publishable_'))
+        throw Error('Use a chave publicável sb_publishable_…');
+      const email=$('email').value.trim(),password=$('password').value;
+      const r=await fetch(BASE+'/auth/v1/token?grant_type=password',{
+        method:'POST',headers:{apikey:key,'Content-Type':'application/json'},
+        body:JSON.stringify({email,password}),cache:'no-store'});
+      $('password').value='';
+      if(!r.ok)throw Error('Login recusado (HTTP '+r.status+').');
+      const j=await r.json();if(!j.access_token||!j.user?.id)throw Error('Login incompleto.');
+      token=j.access_token;user=j.user;
+      $('account').textContent='Conta: '+(user.email||email);
+      $('auth').classList.add('hidden');$('exportBox').classList.remove('hidden');
+      say('Pronto para gerar o backup.');
+    }catch(e){say(e.message,true)}finally{btn.disabled=false}
+  };
+  $('export').onclick=async()=>{
+    const btn=$('export');btn.disabled=true;
+    try{
+      const data=await build();
+      const json=JSON.stringify(data);
+      // Verify the serialized file is parseable before offering it.
+      const check=JSON.parse(json);
+      if(check.figures.length!==data.figures.length||check.groups.length!==data.groups.length)
+        throw Error('Falha ao conferir o arquivo gerado.');
+      const blob=new Blob([json],{type:'application/json'}),link=document.createElement('a');
+      link.href=URL.createObjectURL(blob);
+      link.download='curio-online-backup-'+new Date().toISOString().slice(0,10)+'.json';
+      document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(link.href),60000);
+      say('Backup gerado: '+data.figures.length+' figuras, '+data.groups.length+
+        ' coleções, '+data.wishlist.length+' desejos e '+$('bar').value+
+        ' fotos. Confira o arquivo baixado antes de depender dele.');
+    }catch(e){say('Exportação interrompida: '+e.message+'. Nenhum arquivo incompleto foi oferecido.',true)}
+    finally{btn.disabled=false}
+  };
+})();
+</script>
+</html>
