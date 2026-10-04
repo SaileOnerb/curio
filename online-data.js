@@ -113,7 +113,7 @@
     coverQueue=[];coverSeen.clear();coverByUuid=new Map(remotePhotos.filter(p=>p.kind==='cover').map(p=>[p.figure_id,p]));
     const groupById=new Map(remoteCollections.map((row,i)=>{
       const localId=numericId(row,i,'groups');ids.set('groups:'+localId,row.id);
-      return [row.id,{id:localId,name:row.name}]
+      return [row.id,{...row.data,id:localId,name:row.name,cover:''}]
     }));
     const groups=Array.from(groupById.values());
     const groupNames=new Map();
@@ -192,12 +192,42 @@
     else {row=(await mutation('wishlist','POST',{owner_id:user.id,data}))[0];if(!row)throw Error('Não foi possível confirmar o item.');ids.set('wishlist:'+obj.id,row.id)}
     versions.set(row.id,row.updated_at);replaceCached('wishlist',{...obj});
   }
+  async function uploadCollectionCover(src,uuid){
+    const blob=await (await fetch(src)).blob();
+    if(!['image/jpeg','image/png','image/webp'].includes(blob.type)||!blob.size||blob.size>2097152)throw Error('Capa inválida ou acima de 2 MB.');
+    const path=user.id+'/'+uuid+'/collection-cover-'+crypto.randomUUID()+'.'+({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[blob.type]);
+    const response=await fetch(BASE+'/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',headers:authHeaders({'Content-Type':blob.type}),body:blob});
+    if(!response.ok)throw Error('Não foi possível enviar a capa.');
+    return path;
+  }
+  async function loadCollectionCover(id){
+    const group=cache?.groups.find(g=>g.id===id);if(!group?.coverPath)return '';
+    const current=session,path=group.coverPath,src=await photo(path);
+    if(current!==session||!cache?.groups.some(g=>g.id===id&&g.coverPath===path))return '';
+    group.cover=src;return src;
+  }
   async function writeGroup(obj){
-    const uuid=ids.get('groups:'+obj.id);let row;
-    if(uuid){row=(await mutation('collections','PATCH',{name:obj.name},'?id=eq.'+uuid))[0];if(!row)throw Error('Coleção não encontrada. Atualize a página.');}
-    else {row=(await mutation('collections','POST',{owner_id:user.id,name:obj.name}))[0];if(!row)throw Error('Coleção não confirmada.');ids.set('groups:'+obj.id,row.id)}
-    const at=collectionRows.findIndex(x=>x.id===row.id);if(at<0)collectionRows.push(row);else collectionRows[at]=row;
-    replaceCached('groups',{...obj});
+    const uuid=ids.get('groups:'+obj.id),old=collectionRows.find(r=>r.id===uuid);let row,newPath='';
+    try{
+      if(uuid){row=old;if(!row)throw Error('Coleção não encontrada. Atualize a página.');}
+      else {row=(await mutation('collections','POST',{owner_id:user.id,legacy_id:String(obj.id),name:obj.name}))[0];if(!row)throw Error('Coleção não confirmada.');}
+      const data={...(old?.data||{})};
+      for(const name of ['maker','featured'])if(Object.prototype.hasOwnProperty.call(obj,name))data[name]=obj[name];
+      if(obj.cover?.startsWith('data:')){newPath=await uploadCollectionCover(obj.cover,row.id);data.coverPath=newPath;}
+      else if(obj.coverPath)data.coverPath=obj.coverPath;
+      if(obj.removeCover)delete data.coverPath;
+      const payload={name:obj.name};if(Object.keys(data).length||old?.data)payload.data=data;
+      row=(await mutation('collections','PATCH',payload,'?id=eq.'+row.id))[0];if(!row)throw Error('Coleção não confirmada.');
+      ids.set('groups:'+obj.id,row.id);
+      const at=collectionRows.findIndex(x=>x.id===row.id);if(at<0)collectionRows.push(row);else collectionRows[at]=row;
+      replaceCached('groups',{...data,id:obj.id,name:obj.name,cover:obj.cover||''});
+    }catch(error){
+      if(newPath)await storageDelete(newPath).catch(()=>{});
+      if(!uuid&&row?.id)await mutation('collections','DELETE',undefined,'?id=eq.'+row.id).catch(()=>{});
+      if(/data|schema cache/i.test(error.message))throw Error('Aplique a atualização SQL de coleções no Supabase antes de salvar estes campos.');
+      throw error;
+    }
+    if(old?.data?.coverPath&&old.data.coverPath!==row.data?.coverPath)await storageDelete(old.data.coverPath).catch(()=>{});
   }
   async function storageDelete(path){const r=await fetch(BASE+'/storage/v1/object/'+BUCKET+'/'+path,{method:'DELETE',headers:authHeaders()});if(!r.ok&&r.status!==404)throw Error('Falha ao remover uma foto (HTTP '+r.status+').')}
   async function upload(src,uuid,kind,position){
@@ -254,7 +284,7 @@
     const rows=await mutation(table,'DELETE',undefined,'?id=eq.'+uuid);
     if(rows.length!==1)throw Error('Registro alterado em outro dispositivo. Atualize a página.');
     if(store==='figures')photoRows=photoRows.filter(x=>x.figure_id!==uuid);
-    if(store==='groups')collectionRows=collectionRows.filter(x=>x.id!==uuid);
+    if(store==='groups'){const path=collectionRows.find(x=>x.id===uuid)?.data?.coverPath;if(path)await storageDelete(path).catch(()=>{});collectionRows=collectionRows.filter(x=>x.id!==uuid);}
     const arr=cache[store],at=arr.findIndex(x=>x.id===id);if(at>=0)arr.splice(at,1);
     ids.delete(store+':'+id);versions.delete(uuid);
   }
@@ -264,7 +294,8 @@
     const owner=user.id, current=session;
     const [fs,cs,ws,links,ps,ss]=await Promise.all(['figures','collections','wishlist','figure_collections','figure_photos','user_settings'].map(list));
     if(current!==session)throw Error('Sessão alterada.');
-    const groups=cs.map((c,i)=>({id:numericId(c,i,'groups'),name:c.name}));
+    const groups=cs.map((c,i)=>({maker:c.data?.maker||'',featured:!!c.data?.featured,id:numericId(c,i,'groups'),name:c.name}));
+    await mapLimit(cs,3,async(c)=>{if(c.data?.coverPath){const blob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+c.data.coverPath);if(current!==session)throw Error('Sessão alterada.');groups[cs.indexOf(c)].cover=await asDataUrl(blob);}});
     const groupMap=new Map(cs.map((c,i)=>[c.id,groups[i]]));
     const figs=fs.map((f,i)=>({...f.data,id:numericId(f,i,'figures'),name:f.name,groups:[],cover:'',coverOriginal:'',gallery:[]}));
     const figureMap=new Map(fs.map((f,i)=>[f.id,figs[i]]));
@@ -310,8 +341,9 @@
       throw Error('Use um backup JSON completo do CURIÓ no formato curio-backup v1.');
     const names=new Map(),idsByKind=[['figura',backup.figures],['wishlist',backup.wishlist],['coleção',backup.groups]];
     for(const [kind,items] of idsByKind){const seen=new Set();for(const x of items){const id=importId(x);if(!id||seen.has(id))throw Error('ID ausente ou duplicado em '+kind+'.');seen.add(id)}}
-    for(const g of backup.groups){if(typeof g.name!=='string'||!g.name.trim())throw Error('Coleção sem nome.');const n=normalizeName(g.name);if(names.has(n))throw Error('Nomes duplicados de coleções.');names.set(n,{legacy_id:importId(g),name:g.name.trim()})}
+    for(const g of backup.groups){if(typeof g.name!=='string'||!g.name.trim())throw Error('Coleção sem nome.');const n=normalizeName(g.name);if(names.has(n))throw Error('Nomes duplicados de coleções.');names.set(n,{legacy_id:importId(g),name:g.name.trim(),maker:g.maker||'',featured:!!g.featured,cover:g.cover||''})}
     let photos=0,bytes=0;
+    for(const g of backup.groups)if(g.cover){importPhotoType(g.cover);const size=Math.floor((g.cover.length-g.cover.indexOf(',')-1)*.75);if(size>2097152)throw Error('Capa de coleção supera 2 MB.');bytes+=size;}
     for(const f of backup.figures){
       if(typeof f.name!=='string'||!f.name.trim())throw Error('Figura sem nome.');
       if(f.groups!=null&&!Array.isArray(f.groups))throw Error('Coleções de figura inválidas.');
@@ -359,6 +391,11 @@
       const groups=await list('collections'),groupIds=new Map();
       for(const g of manifest.groups){ensureSession();let row=groups.find((r,i)=>rowKey(r,'groups',i)===g.legacy_id);
         if(!row){row=(await mutation('collections','POST',{owner_id:owner,legacy_id:g.legacy_id,name:g.name}))[0];if(!row)throw Error('Coleção não confirmada.');groups.push(row)}
+        if(g.maker||g.featured||g.cover){
+          const data={...(row.data||{}),maker:g.maker||'',featured:!!g.featured};let path='';
+          try{if(g.cover&&!data.coverPath){path=await uploadCollectionCover(g.cover,row.id);data.coverPath=path;}row=(await mutation('collections','PATCH',{data},'?id=eq.'+row.id))[0];if(!row)throw Error('Coleção não confirmada.');}
+          catch(error){if(path)await storageDelete(path).catch(()=>{});throw error;}
+        }
         if(row.name!==g.name)throw Error('Conflito na coleção '+g.name+'.');groupIds.set(normalizeName(g.name),row.id);step('Coleção: '+g.name)}
       const figures=await list('figures'),links=await list('figure_collections'),photoRecords=await list('figure_photos'),photoJobs=[];
       for(const f of backup.figures){ensureSession();const legacy_id=importId(f),name=f.name.trim();let row=figures.find((r,i)=>rowKey(r,'figures',i)===legacy_id);
@@ -400,6 +437,7 @@
     if(!user)throw Error('Entre na conta.');
     const owner=user.id,current=session;
     const photosToDelete=await list('figure_photos');
+    const collectionCovers=(await list('collections')).filter(c=>c.data?.coverPath).map(c=>({storage_path:c.data.coverPath}));photosToDelete.push(...collectionCovers);
     if(current!==session)throw Error('Sessão alterada.');
     async function removeRows(table){
       progress('Apagando '+table+'…');
@@ -572,6 +610,6 @@
       if(!document.hidden&&user&&refreshToken&&Date.now()>expiresAt*1000-60000)refreshSession().catch(()=>message('Sessão expirada. Entre novamente.',true));
     });
   }
-  window.curioRemote={start,read,loadPhotos,loadCovers,loadFigurePhotos,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},previewAuth:()=>user?{Authorization:'Bearer '+token,apikey:key}:{},
+  window.curioRemote={start,read,loadPhotos,loadCovers,loadFigurePhotos,loadCollectionCover,saveSettings,exportBackup,prepareImport,runImport,eraseAccount,account:()=>user&&{id:user.id,email:user.email},previewAuth:()=>user?{Authorization:'Bearer '+token,apikey:key}:{},
     write,remove};
 })();

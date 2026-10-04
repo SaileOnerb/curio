@@ -17,6 +17,7 @@ if(!data.includes(redirect))throw new Error('Redirect de autenticação mudou.')
 data=data.replace(redirect,redirect+"\n    if(window.Capacitor?.isNativePlatform())return 'https://curiocollection.com.br/';");
 await writeFile(new URL('online-data.js',output),data);
 await cp(new URL('icons/',root),new URL('icons/',output),{recursive:true});
+await cp(new URL('platform-ui.js',root),new URL('platform-ui.js',output));
 await cp(new URL('platform-swipe.js',root),new URL('platform-swipe.js',output));
 await cp(new URL('manifest.webmanifest',root),new URL('manifest.webmanifest',output));
 await build({entryPoints:[fileURLToPath(new URL('../mobile/native.js',import.meta.url))],outfile:fileURLToPath(new URL('native.js',output)),bundle:true,format:'iife',target:'es2022'});
