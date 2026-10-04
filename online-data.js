@@ -73,7 +73,7 @@
   async function saveSettings(obj){
     if(!user)throw Error('Entre na conta.');
     const found=(await list('user_settings')).find(s=>s.owner_id===user.id);
-    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','hiddenMakers','profileName','profileAvatar','tourCompleted','collectionLayout','collectionColumns','featuredFigureId'];
+    const allowed=['dark','hideHomeValues','monthlyGoal','annualGoal','customMakers','hiddenMakers','profileName','profileAvatar','tourCompleted','collectionLayout','collectionColumns','featuredFigureId','featuredFigureCrop'];
     const next={...(found?.data||{})};
     for(const name of allowed)if(Object.prototype.hasOwnProperty.call(obj,name))next[name]=obj[name];
     const method=found?'PATCH':'POST';
@@ -455,9 +455,20 @@
   async function start(onReady){
     lock();
     document.body.classList.add('online-restoring');
+    const passwordToggles=[...document.querySelectorAll('[data-password-toggle]')];
+    const hidePasswords=()=>passwordToggles.forEach(button=>{
+      $(button.dataset.passwordToggle).type='password';button.setAttribute('aria-pressed','false');button.setAttribute('aria-label','Mostrar senha');
+    });
+    let passwordTimer;
+    passwordToggles.forEach(button=>button.addEventListener('click',()=>{
+      const input=$(button.dataset.passwordToggle),show=input.type==='password';
+      hidePasswords();clearTimeout(passwordTimer);
+      if(show){input.type='text';button.setAttribute('aria-pressed','true');button.setAttribute('aria-label','Ocultar senha');passwordTimer=setTimeout(hidePasswords,8000);}
+    }));
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)hidePasswords();});
     let mode='login',recoveryToken='';
     const setMode=(next,notice='')=>{
-      mode=next;const titles={login:'Entrar no CURIÓ',signup:'Criar conta',forgot:'Recuperar senha',reset:'Definir nova senha'};
+      hidePasswords();clearTimeout(passwordTimer);mode=next;const titles={login:'Entrar no CURIÓ',signup:'Criar conta',forgot:'Recuperar senha',reset:'Definir nova senha'};
       const intros={login:'Acesse seus dados em qualquer dispositivo.',signup:'Crie sua coleção pessoal. Confirme seu e-mail para entrar.',forgot:'Enviaremos um link de recuperação ao seu e-mail.',reset:'Escolha uma nova senha para sua conta.'};
       $('onlineAuthTitle').textContent=titles[next];$('onlineAuthIntro').textContent=intros[next];
       $('onlineEmailWrap').hidden=next==='reset';$('onlinePasswordWrap').hidden=next==='forgot';$('onlineConfirmWrap').hidden=!['signup','reset'].includes(next);
@@ -505,6 +516,7 @@
       const button=$('onlineLogin');button.disabled=true;
       try{
         const proposedKey=PUBLISHABLE_KEY;
+        hidePasswords();
         const email=$('onlineEmail').value.trim(),password=$('onlinePassword').value;
         if(mode!=='reset'&&!email)throw Error('Informe o e-mail.');
         if(mode!=='forgot'&&!password)throw Error('Informe a senha.');
