@@ -28,7 +28,7 @@ cd android
 
 ## Antes de distribuir
 
-Esta base ainda não foi compilada nem executada em um dispositivo Android. O APK debug é somente para testes. Uma distribuição definitiva exige assinatura própria; conserve a chave para futuras atualizações.
+Esta base foi compilada no Windows e executada em dispositivo Android pelo responsável. Login, uso geral e criação de coleção com capa foram confirmados; os demais casos abaixo ainda precisam de validação específica. O APK debug é somente para testes. Uma distribuição definitiva exige assinatura própria; conserve a chave para futuras atualizações.
 
 Checklist do piloto:
 - Login, reinício do app, criação de conta e logout.

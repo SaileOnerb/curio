@@ -1,60 +1,102 @@
 # CURIÓ — Personal Collection
 
-**Versão atual: 2.7.8** · Catálogo pessoal de action figures para usar no navegador ou instalar como aplicativo. Aceita figuras de diferentes fabricantes e linhas, incluindo Third Party, customs e paralelas.
+**Versão atual do produto: 4.0.1** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
 
-## Acessar o aplicativo
+**[Abrir o CURIÓ](https://curiocollection.com.br)** · [Preview da PR #9](https://deploy-preview-9--curiovault.netlify.app)
 
-1. Abra **[saileonerb.github.io/curio](https://saileonerb.github.io/curio/)** no navegador do celular ou do computador.
-2. Para usar como app no celular, vá a **Mais → Aplicativo** e toque em **Instalar CURIÓ**, caso o botão esteja disponível. Você também pode usar a opção de instalação ou **Adicionar à tela inicial** oferecida pelo navegador.
-3. Quando o CURIÓ avisar que há uma nova versão, toque em **Atualizar**. Em **Mais → Atualizações**, você pode verificar manualmente.
+O site é hospedado no Netlify. Autenticação, banco e fotos ficam no Supabase; os e-mails de autenticação usam o Resend. O GitHub Pages preserva a fase offline anterior e não é o endereço principal da plataforma atual.
 
-O app funciona como PWA e mantém uma cópia para uso offline após carregar. Os dados são guardados **neste navegador/dispositivo**; ainda não existe conta nem sincronização automática entre celular, tablet e computador.
+## Acesso e dados
 
-## Guia das cinco abas
+Crie uma conta, confirme o e-mail e entre com sua senha. A mesma conta permite acessar os dados no site e no APK. A sessão é restaurada ao atualizar a página. Tema, privacidade dos valores e preferências são salvos pela plataforma.
 
-No celular, use a barra inferior. No computador, as mesmas áreas aparecem na navegação lateral; **Mais** corresponde a **Configurações**.
+Os registros são separados por usuário com Row Level Security (RLS). Fotos da coleção e capas personalizadas usam Storage privado. A imagem do QR Pix é um recurso público de apoio, com envio restrito à administração do projeto.
 
-### 1. Início
+O aplicativo Android empacota a interface com Capacitor e continua usando os serviços online. Não oferece, nesta fase, funcionamento completo offline. Backup JSON continua recomendado: sincronização não substitui uma cópia externa dos seus dados.
 
-Mostra o total de figuras e fabricantes, os valores da coleção e as quatro aquisições mais recentes. Toque em **Adicionar figura** para cadastrar uma peça. Se preferir, oculte os valores financeiros em **Mais → Privacidade**.
+## Recursos atuais
 
-### 2. Coleção
+- **Início:** resumo da coleção, aquisições recentes, figura de destaque com recorte próprio e coleções escolhidas para destaque na parte inferior da Home.
+- **Coleção:** figuras com fabricante, linha, escala, aquisição e galeria; edição, exclusão, favoritos, filtros, ordenação, seleção múltipla, grade com densidade ajustável e visualização em lista. O filtro de fabricantes mostra os que têm figuras cadastradas.
+- **Coleções personalizadas:** botão Nova coleção separado de Adicionar figura; nome, fabricante descritivo, capa personalizada e destaque na Home. Gerenciar coleções permite editar, destacar, renomear e excluir agrupamentos. O fabricante da coleção não altera o fabricante de suas figuras.
+- **Wishlist:** cadastro e edição de desejos com link, nome, preço e foto; abertura da loja e transferência para cadastro ao adquirir. A análise automática de links existe, mas ainda falha nas lojas testadas; preenchimento manual permanece necessário.
+- **Financeiro:** valores registrados nas figuras, histórico de aquisições e metas ajustáveis em Editar metas. Privacidade dos valores da Home disponível nas configurações.
+- **Configurações e perfil:** tema claro/escuro, nome e foto de perfil, fabricantes personalizados, importar/exportar backup, lembretes e Nulificador Total. Contatos e Apoie o CURIÓ ficam nesta área.
+- **Interface:** tutorial de primeiro acesso dispensável, confirmações com identidade visual, seletores personalizados, login com Enter e visibilidade temporária da senha; navegação por deslize no mobile.
 
-É a estante com todas as figuras. Use a busca e os filtros por coleção, fabricante, linha e favoritos; escolha a ordem de exibição no seletor. Toque em uma figura para ver seus detalhes, fotos e dados de aquisição. Use **Adicionar** para cadastrar, **Gerenciar coleções** para organizar grupos e o coração para favoritar. No celular, pressione um card por cerca de meio segundo para iniciar a seleção múltipla e adicionar ou remover figuras de coleções; no computador, use **Selecionar**.
+O seletor de arquivos, permissões do aparelho e outras superfícies do sistema podem continuar nativos. O APK e o site usam a mesma base visual, mas exigem validação em cada plataforma.
 
-No cadastro, informe o nome e os dados que quiser manter. Fabricante e linha ajudam a preencher campos pertinentes. Você pode escolher uma capa, ajustar seu enquadramento e adicionar outras fotos.
+## Imagens, backups e apoio
 
-### 3. Wishlist
+As imagens são carregadas progressivamente; as capas personalizadas de coleções são buscadas sob demanda. Importação e exportação online foram validadas entre contas. Os backups portáveis incluem imagens, por isso ainda podem ser grandes. A exportação comprimida não elimina o custo de baixar as fotos necessárias para montar um backup completo.
 
-Guarde figuras que pretende comprar sem fazer um cadastro completo: cole o link da loja e, se quiser, informe nome e preço estimado; depois toque em **Adicionar**. O CURIÓ guarda o link para você voltar à loja. Na lista, é possível editar, excluir ou usar **Adquiri**, que abre o cadastro da coleção com os dados disponíveis. O item sai da Wishlist após a figura ser salva.
+No Android, a exportação usa o compartilhamento do sistema: confirme que o arquivo foi efetivamente salvo. Antes de operações de exclusão, preserve um backup externo. Commits e checkpoints do GitHub guardam código, não a coleção particular dos usuários.
 
-A versão atual **não extrai automaticamente** foto, nome e preço da página da loja. A Wishlist inteligente está planejada para uma etapa futura.
+O QR Pix original é administrado pelo Supabase em `curio-assets/support/pix.png`; sua leitura foi confirmada pelo responsável. Instruções em [QR Pix do apoio](docs/support-qr.md). A configuração das coleções personalizadas está em [Coleções](docs/collection-details.md).
 
-### 4. Financeiro
+## Android: gerar e testar no Windows
 
-Acompanhe gastos do mês e do ano, total gasto, valor estimado da coleção, gráfico dos últimos seis meses e histórico de compras. As informações vêm dos valores e datas registrados nas figuras. Para definir **meta mensal** e **meta anual**, acesse **Mais → Financeiro (em Configurações)**.
+Instale Node.js 22 ou superior, Android Studio, o SDK exigido pelo projeto e um JDK compatível (JDK 21 foi usado no piloto). Extraia o projeto atualizado e abra o terminal na pasta que contém `package.json`:
 
-### 5. Mais / Configurações
+```powershell
+npm ci
+npm run android:sync
+npm run android:open
+```
 
-Ajuste tema claro ou escuro, privacidade dos valores da Home, metas, fabricantes personalizados e coleções. Em **Dados e backup**, use **Exportar JSON** para guardar uma cópia da coleção e **Importar JSON** para recuperar ou mesclar registros. A opção **Otimizar imagens existentes** reduz o peso de fotos antigas com um backup prévio. As ferramentas de diagnóstico, recuperação e snapshots ficam recolhidas em **Ferramentas de recuperação**. Aqui também ficam as opções de atualização e instalação.
+Se o Android Studio não abrir automaticamente, abra manualmente a pasta `android` desse mesmo projeto. Se ocorrer Invalid Gradle JDK configuration, selecione o JDK 21 instalado nas configurações do Gradle.
 
-## Seus dados e backups
+Após a sincronização, gere o APK pelo menu Build do Android Studio. O APK de teste fica em:
 
-- O CURIÓ salva figuras, fotos, Wishlist, coleções e preferências no **IndexedDB** do navegador usado. Abrir o site em outro navegador ou dispositivo não traz esses dados automaticamente.
-- Faça backups em **Mais → Dados e backup → Exportar JSON** e confirme que o arquivo foi salvo no dispositivo. Guarde uma cópia fora do navegador, especialmente antes de trocar de aparelho ou limpar dados do site.
-- A importação valida o arquivo e mescla registros por ID. Confira as contagens mostradas antes de confirmar uma restauração.
-- O app pode criar até três snapshots locais antes de operações críticas. Eles ajudam em recuperações, mas ficam sujeitos à perda dos dados do navegador; **não substituem o arquivo JSON exportado**.
-- Os checkpoints `checkpoint-*` no GitHub preservam versões do **código**. Eles não incluem suas figuras nem suas fotos.
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
 
-## Estado do projeto
+O piloto foi compilado e usado em dispositivo: login e uso geral foram confirmados, assim como a criação de coleção com capa. Para atualizar, gere um novo APK e instale mantendo a assinatura compatível. Publicar o site não atualiza o APK instalado. Assinatura definitiva, distribuição pública e publicação em loja ainda estão pendentes. Consulte [Piloto Android](docs/android-pilot.md).
 
-A versão publicada é um app estático em HTML, CSS e JavaScript, hospedado no GitHub Pages. A navegação seletiva e a poda de carregamento das capas foram validadas no aparelho em 26/09/2026. O foco atual é estabilidade e refinamento. Sincronização entre dispositivos, extração automática dos links da Wishlist, afiliados e Price Tracker não fazem parte da versão 2.7.8.
+## Desenvolvimento e publicação
 
-### Preparação da versão online
+- Interface compartilhada: `index-online.html`.
+- Integração Supabase: `online-data.js`.
+- Seletores compartilhados: `platform-ui.js`.
+- Deslize mobile: `mobile/swipe.js`, empacotado em `platform-swipe.js`.
+- Build Android: `scripts/build-mobile.mjs`, configuração Capacitor e pasta `android`.
+- Build Netlify: `netlify.toml`; análise de produto em `netlify/functions/product-preview.mjs`.
+- Banco: migrações em `supabase/migrations`.
 
-O [plano de migração](docs/online-migration.md) e a [migração inicial do banco](supabase/migrations/20260926000000_online_foundation.sql) preparam contas, dados separados por usuário e fotos privadas. Esta etapa ainda não oferece login nem sincronização na versão publicada; a coleção existente continua no navegador. A instalação do banco exige um projeto Supabase configurado e testes de isolamento antes de conectar o aplicativo.
+A evolução online está na branch `feat/online-foundation`, PR #9. O README exibido na página principal do repositório depende da branch selecionada; a branch `main` ainda conserva a documentação e o aplicativo da fase offline.
 
-## Changelog
+Publicações ocorrem a cada **três updates funcionais**, salvo antecipação autorizada. Uma mudança compartilhada deve acompanhar site e Android; o pacote do APK é gerado separadamente. Documentação e correções do mesmo update não aumentam a contagem. Veja [Política de atualizações](docs/release-policy.md).
+
+## Versões e estado da próxima atualização
+
+| Versão | Marco |
+| --- | --- |
+| 1.x–2.x | Aplicativo local e PWA, com dados no dispositivo. |
+| 3.0.0 | Fase online: contas, banco e fotos sincronizados. |
+| 4.0.0 | Fase multiplataforma: site e piloto Android. Coleções com capa e destaque validadas no APK. |
+| 4.0.1 | Alinhamento do gerenciador de coleções: ações em colunas consistentes no desktop e grade de duas colunas no mobile. Publicação autorizada; validação visual em dispositivo ainda pendente. |
+
+Correções e refinamentos usam `4.0.x`; novas funcionalidades relevantes usam `4.x.0`. A versão `5.0.0` fica reservada a uma transformação significativa da estrutura ou experiência, não à quantidade de updates. Os pacotes passam a usar nomes como `curio-4.0.1.zip`. A versão do pacote, o indicador da interface e o versionName Android estão alinhados em 4.0.1; o versionCode Android é 2.
+
+## Pendências conhecidas
+
+- Tornar confiável a análise dos links da Wishlist para obter nome, preço e foto. Testes com Amazon e AliExpress ainda não tiveram o resultado esperado.
+- Implementar a integração de afiliados. Cadastros e exemplos de links foram coletados para Amazon, AliExpress, Shopee e Mercado Livre; aprovação não foi confirmada para todos. Não há conversão automática integrada neste momento.
+- Continuar medindo peso e duração dos backups, importação e carregamento em coleções maiores. Não há percentual universal de redução comprovado.
+- Validar a fluidez do deslize em aparelhos reais; alterações na animação não garantem desempenho uniforme.
+- Validar visualmente o alinhamento de 4.0.1, inclusive nomes longos e telas estreitas.
+- Completar testes Android de compartilhamento de backups, seleção de fotos, botão Voltar, teclado, rotação e janelas sobrepostas.
+- Implementar retorno dos links de confirmação e recuperação ao APK (deep links); por enquanto o fluxo de e-mail usa o site.
+- Consolidar assinatura e distribuição do Android e manter os indicadores técnicos de versão coerentes com o produto.
+
+E-mails de confirmação estão funcionando. A aparência e o fluxo completo de recuperação devem ser revisados em conjunto com os templates configurados no Supabase; alterações nesses templates não são publicadas automaticamente pelo repositório.
+
+## Histórico
+
+Os registros abaixo documentam a fase offline. Descrições de IndexedDB, snapshots locais e versões 2.7.x pertencem àquela fase e não são promessas de equivalência com os fluxos online atuais.
+
+## Histórico da fase offline — versões 1.x e 2.x
 ### V1 — Marvel Legends Collection
 - Primeira versão local.
 - Dashboard, Minha Coleção, Wishlist, Build-A-Figure e Financeiro.

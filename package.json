@@ -1,6 +1,6 @@
 {
   "name": "curio",
-  "version": "0.1.0",
+  "version": "4.0.1",
   "private": true,
   "scripts": {
     "mobile:build": "npm run swipe:build && node scripts/build-mobile.mjs",

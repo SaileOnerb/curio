@@ -13,3 +13,9 @@ Novo lote: 1/3 — capa mobile e seletores visuais compartilhados. Validação e
 2/3 — coleções com fabricante, capa privada e destaque na Home. Migração SQL necessária antes do teste.
 
 Publicação extraordinária autorizada: capa mobile, seletores visuais e coleções personalizadas. Usuário confirmou a migração SQL e o funcionamento no APK. Contador reiniciado em 0/3 nesta publicação.
+
+Novo lote: 1/3 — gerenciador de coleções com ações alinhadas em colunas fixas no desktop e grade 2 × 2 no mobile. Compartilhado entre site e Android; sem deploy neste update.
+
+Versionamento do produto: 4.0.0 atual; refinamento pendente do gerenciador é 4.0.1. Correções usam PATCH, funcionalidades relevantes MINOR e transformação estrutural MAJOR. Pacotes devem usar curio-X.Y.Z.zip. Atualização de documentação pertence ao mesmo update 1/3.
+
+Publicação extraordinária da 4.0.1 autorizada pelo usuário: alinhamento e documentação, indicadores de versão compartilhados. Reinício da contagem em 0/3.
