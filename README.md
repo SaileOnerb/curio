@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão atual do produto: 4.0.1** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
+**Versão atual do produto: 4.1.0** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
 
 **[Abrir o CURIÓ](https://curiocollection.com.br)** · [Preview da PR #9](https://deploy-preview-9--curiovault.netlify.app)
 
@@ -82,7 +82,7 @@ Correções e refinamentos usam `4.0.x`; novas funcionalidades relevantes usam `
 ## Pendências conhecidas
 
 - Tornar confiável a análise dos links da Wishlist para obter nome, preço e foto. Testes com Amazon e AliExpress ainda não tiveram o resultado esperado.
-- Implementar a integração de afiliados. Cadastros e exemplos de links foram coletados para Amazon, AliExpress, Shopee e Mercado Livre; aprovação não foi confirmada para todos. Não há conversão automática integrada neste momento.
+- Implementar a integração de afiliados. Cadastros e exemplos de links foram coletados para Amazon, AliExpress, Shopee e Mercado Livre; aprovação não foi confirmada para todos. A 4.1.0 permite salvar um link de afiliado manual por item, preservando o original, com aviso de comissão. Conversão automática e validação de atribuição pelos programas permanecem pendentes.
 - Continuar medindo peso e duração dos backups, importação e carregamento em coleções maiores. Não há percentual universal de redução comprovado.
 - Validar a fluidez do deslize em aparelhos reais; alterações na animação não garantem desempenho uniforme.
 - Validar visualmente o alinhamento de 4.0.1, inclusive nomes longos e telas estreitas.
@@ -359,3 +359,9 @@ Os registros abaixo documentam a fase offline. Descrições de IndexedDB, snapsh
 - Os números detalhados da sonda e o painel Saúde dos dados saíram da tela principal de Configurações após a validação da poda.
 - A otimização de imagens existentes permanece visível. Diagnóstico, exportação de dados encontrados e snapshots continuam disponíveis em **Ferramentas de recuperação**, fechado por padrão.
 - Os mecanismos automáticos de integridade, backup e snapshots permanecem ativos.
+
+### 4.1.0
+- Link de afiliado opcional no cadastro e edição da Wishlist, com prioridade no botão Abrir na loja e aviso discreto. HTTPS validado; parâmetros do link preservados.
+- Filtros e visualização da coleção reunidos em janela; pesquisa e adição permanecem na aba.
+- Modais acima da navegação mobile; barra inferior oculta durante janelas.
+- Site e pacote Android alinhados em 4.1.0 (versionCode 3).
