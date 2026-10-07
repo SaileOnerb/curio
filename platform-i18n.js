@@ -5,7 +5,7 @@ const storageKey='curio-language';
 function initial(){try{const v=localStorage.getItem(storageKey);if(v==='pt-BR'||v==='en')return v}catch{}return /^pt/i.test(navigator.language||'')?'pt-BR':'en'}
 let language=initial(),observer,applying=false;
 const originals=new WeakMap();
-const protectedSelector='script,style,code,textarea,[data-no-translate],.item h3,.item .pill,#makerList,.choice,#history b,#groupManager b,.homeGroup span,#onlineProfileName,#onlineProfileEmail,#dTitle,#curioDialogInput,option';
+const protectedSelector='script,style,code,textarea,.curioSelectButton,[data-no-translate],.item h3,.item .pill,#makerList,.choice,#history b,#groupManager b,.homeGroup span,#onlineProfileName,#onlineProfileEmail,#dTitle,#curioDialogInput,option';
 function translate(value){if(language==='pt-BR')return value;const text=value.trim();if(catalog[text])return value.replace(text,catalog[text]);let m;if((m=text.match(/^Filtros \((\d+)\)$/)))return 'Filters ('+m[1]+')';if((m=text.match(/^(\d+) por fileira$/)))return m[1]+' per row';return value}
 function source(node,key,current){let cache=originals.get(node);if(!cache){cache={};originals.set(node,cache)}const old=cache[key];if(!old||current!==old.output)cache[key]={source:current,output:current};return cache[key]}
 function apply(){if(applying)return;applying=true;observer?.disconnect();document.documentElement.lang=language;

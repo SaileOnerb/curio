@@ -18,10 +18,12 @@
   return 'Selecionar opção';
  }
  function refresh(select,button){
-  const text=select.selectedOptions[0]?.textContent||'Selecionar';
+  const raw=select.selectedOptions[0]?.textContent||'Selecionar';
+  const text=select.closest('#collectionFiltersModal,#settings,#figureModal,#collectionEditorModal')?window.curioI18n?.t(raw)||raw:raw;
   if(button.firstElementChild.textContent!==text)button.firstElementChild.textContent=text;
   if(button.disabled!==select.disabled)button.disabled=select.disabled;
-  button.setAttribute('aria-label',caption(select)+': '+text);
+  const label=(window.curioI18n?.t(caption(select))||caption(select))+': '+text;
+  if(button.getAttribute('aria-label')!==label)button.setAttribute('aria-label',label);
  }
  function render(){
   list.replaceChildren();if(!active)return;
@@ -53,5 +55,6 @@
  let pending=false;const observer=new MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;scan();});});
  // Não observar os botões gerados: isso evita um ciclo de atualização visual.
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','hidden']});
+ window.addEventListener('curioLanguageChanged',scan);
  scan();
 })();
