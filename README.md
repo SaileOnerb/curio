@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão atual do produto: 4.3.1** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
+**Versão atual do produto: 4.3.2** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
 
 **[Abrir o CURIÓ](https://curiocollection.com.br)** · [Preview da PR #9](https://deploy-preview-9--curiovault.netlify.app)
 
@@ -376,3 +376,7 @@ Conversão de exibição BRL/USD/EUR com cotação diária e data de referência
 ## 4.3.1
 
 Corrige ciclo de atualização entre tradução e seletores visuais que podia travar a interface em inglês. Seletores mantêm o mesmo texto traduzido e só atualizam atributos alterados. Validação conjunta em português/inglês e sincronização Android.
+
+## 4.3.2
+
+Oculta ferramentas da fase offline e atualizador legado por seletores fixos na interface online. Mantém os controles de backup e exclusão da conta online.
