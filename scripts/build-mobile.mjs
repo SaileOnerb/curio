@@ -22,3 +22,7 @@ await cp(new URL('platform-swipe.js',root),new URL('platform-swipe.js',output));
 await cp(new URL('manifest.webmanifest',root),new URL('manifest.webmanifest',output));
 await build({entryPoints:[fileURLToPath(new URL('../mobile/native.js',import.meta.url))],outfile:fileURLToPath(new URL('native.js',output)),bundle:true,format:'iife',target:'es2022'});
 console.log('Interface Android preparada em mobile-dist.');
+
+await cp(new URL('platform-i18n.js',root),new URL('platform-i18n.js',output));
+
+await cp(new URL('platform-currency.js',root),new URL('platform-currency.js',output));

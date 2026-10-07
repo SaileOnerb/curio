@@ -25,3 +25,9 @@ Novo lote: 1/3 — correção 4.0.2 preparada: modais acima da navegação e bar
 2/3 — filtros, ordenação, visualização e gerenciamento reunidos em janela Filtros, preservando busca e adição na aba. Correção preparada junto da 4.0.2; sem deploy.
 
 4.1.0: lote 3/3 concluído com link de afiliado manual por item da Wishlist. Inclui filtros compactos e correção das camadas. Publicação e pacote Android; contador reiniciado em 0/3.
+
+Novo lote: 1/3 — 4.1.1 preparada: centralização das ações dos filtros, distribuição do controle de densidade e rodapés dos novos editores. Selecionar fecha a janela para permitir selecionar as figuras. Sem deploy.
+
+2/3 — 4.2.0 preparada com idioma pt-BR/en, detecção local e preferência de conta; catálogo inglês inicial. Mensagens dinâmicas ainda precisam de revisão. Sem deploy.
+
+4.3.0: lote 3/3 com conversão monetária indicativa BRL/USD/EUR. Inclui 4.1.1 e idioma 4.2.0. Após publicação, contador 0/3.

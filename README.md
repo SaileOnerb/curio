@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão atual do produto: 4.1.0** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
+**Versão atual do produto: 4.3.0** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
 
 **[Abrir o CURIÓ](https://curiocollection.com.br)** · [Preview da PR #9](https://deploy-preview-9--curiovault.netlify.app)
 
@@ -365,3 +365,10 @@ Os registros abaixo documentam a fase offline. Descrições de IndexedDB, snapsh
 - Filtros e visualização da coleção reunidos em janela; pesquisa e adição permanecem na aba.
 - Modais acima da navegação mobile; barra inferior oculta durante janelas.
 - Site e pacote Android alinhados em 4.1.0 (versionCode 3).
+
+### 4.2.0 — em preparação
+- Idioma português/inglês com escolha nas Configurações, detecção do aparelho e preferência na conta. Catálogo inicial; mensagens dinâmicas ainda em revisão. Detalhes em [Idiomas](docs/languages.md). Sem deploy neste lote (2/3).
+
+## 4.3.0
+
+Conversão de exibição BRL/USD/EUR com cotação diária e data de referência em Configurações. Registros e backups continuam em BRL. Inclui ajustes 4.1.1 e idioma 4.2.0. Veja docs/currency.md.
