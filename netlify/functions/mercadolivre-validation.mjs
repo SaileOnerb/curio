@@ -3,7 +3,7 @@ const ROOT='https://curiocollection.com.br';
 const CALLBACK=ROOT+'/api/mercadolivre/callback';
 const COOKIE='__Host-curio-meli-validation';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const headers={'content-type':'text/html; charset=utf-8','cache-control':'no-store','referrer-policy':'no-referrer','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://auth.mercadolivre.com.br; frame-ancestors 'none'; base-uri 'none'"};
+const headers={'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-curio-meli-diagnostic':'2','referrer-policy':'no-referrer','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://auth.mercadolivre.com.br; frame-ancestors 'none'; base-uri 'none'"};
 function page(title,body,status=200,extra={}){return new Response(`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · CURIÓ</title><style>body{background:#0f0f10;color:#f5f5f5;font:16px system-ui;margin:0;padding:32px 20px}main{max-width:720px;margin:auto}section{background:#18181b;border:1px solid #2f2e36;border-radius:20px;padding:24px}button{background:#f5f5f5;color:#18181b;border:0;border-radius:12px;padding:14px 22px;font:inherit;cursor:pointer}li{margin:14px 0}p{line-height:1.6;color:#bdbdc3}code{overflow-wrap:anywhere}</style><main><h1>${esc(title)}</h1><section>${body}</section></main></html>`,{status,headers:{...headers,...extra}})}
 function equal(a,b){return timingSafeEqual(createHash('sha256').update(a).digest(),createHash('sha256').update(b).digest())}
 function seal(data,key){const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key,iv);return Buffer.concat([iv,cipher.update(JSON.stringify(data)),cipher.final(),cipher.getAuthTag()]).toString('base64url')}
@@ -27,8 +27,23 @@ export default async function handler(req){
    if(!response.ok)return page('Autorização indisponível',`<p>A troca de autorização falhou (HTTP ${response.status}). Confira as credenciais, o endereço de retorno e o PKCE.</p>`,502,clear);
    const token=await response.json();if(typeof token.access_token!=='string')throw Error();
    const tests=[['Conta autorizada','/users/me',d=>Boolean(d.id)],['Busca de anúncios semelhantes','/sites/MLB/search?q=marvel%20legends&limit=3',d=>Array.isArray(d.results)],['Anúncio de outro vendedor','/items/MLB5399548670',d=>Boolean(d.id&&typeof d.price==='number')],['Busca no catálogo','/products/search?site_id=MLB&q=marvel%20legends&limit=3',d=>Array.isArray(d.results)]];
-   const results=[];for(const [name,path,valid] of tests){const result=await probe(path,token.access_token);results.push(`<li><strong>${esc(name)}</strong>: ${result.status===200&&result.data&&valid(result.data)?'resposta válida':result.status===200?'resposta sem os campos esperados':result.status?'HTTP '+result.status:'consulta indisponível'}</li>`)}
-   return page('Resultado da validação',`<ul>${results.join('')}</ul><p>Os tokens não foram salvos nem exibidos. Uma busca válida ainda exige verificar se os resultados representam anúncios comparáveis. Catálogo não equivale a histórico de vendas.</p>`,200,clear);
+   const results=[];for(const [name,path,valid] of tests){
+    const result=await probe(path,token.access_token);
+    let detail='';
+    if(result.status===403){
+     const allowed=new Set(['PA_UNAUTHORIZED_RESULT_FROM_POLICIES','FORBIDDEN','access_denied','forbidden','Invalid scopes','PolicyAgent']);
+     const codes=[result.data?.code,result.data?.error,result.data?.blocked_by].filter(x=>typeof x==='string'&&allowed.has(x));
+     detail=`<p>${codes.length?'Código da API: '+codes.map(esc).join(' · '):'A resposta não contém um código de erro reconhecido.'} O status sozinho não identifica a causa.</p>`;
+    }
+    if(path.startsWith('/products/search')&&Array.isArray(result.data?.results)){
+     const rows=result.data.results.slice(0,3);
+     detail=`<p>${result.data.results.length} produtos nesta resposta.</p><ul>${rows.map(x=>`<li>${esc(String(x.name||'Sem nome').slice(0,240))} · ${esc(/^MLB[0-9]+$/.test(x.id)?x.id:'ID não reconhecido')} · fotos: ${Array.isArray(x.pictures)?x.pictures.length:0}</li>`).join('')}</ul>`;
+     const first=rows.find(x=>/^MLB[0-9]+$/.test(x.id));
+     if(first){const d=await probe('/products/'+first.id,token.access_token);detail+=`<p>Detalhe do primeiro produto: HTTP ${d.status||'indisponível'}; nome: ${esc(String(d.data?.name||'ausente').slice(0,240))}; fotos: ${Array.isArray(d.data?.pictures)?d.data.pictures.length:0}; preço numérico: ${Number.isFinite(d.data?.price)?'presente':'ausente'}.</p>`}
+    }
+    results.push(`<li><strong>${esc(name)}</strong>: ${result.status===200&&result.data&&valid(result.data)?'resposta válida':result.status===200?'resposta sem os campos esperados':result.status?'HTTP '+result.status:'consulta indisponível'}${detail}</li>`);
+   }
+   return page('Diagnóstico detalhado',`<ul>${results.join('')}</ul><p>Os tokens não foram salvos nem exibidos. Uma busca válida ainda exige verificar se os resultados representam anúncios comparáveis. Catálogo não equivale a histórico de vendas.</p>`,200,clear);
   }catch{return page('Validação interrompida','<p>A sessão expirou, é inválida ou o serviço não respondeu. Inicie uma nova tentativa pelo painel privado.</p>',400,clear)}
  }
  if(!['GET','POST'].includes(req.method))return page('Método inválido','',405);
