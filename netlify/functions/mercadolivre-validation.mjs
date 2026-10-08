@@ -34,8 +34,17 @@ export default async function handler(req){
  if(!['GET','POST'].includes(req.method))return page('Método inválido','',405);
  let credentials='';try{credentials=Buffer.from((req.headers.get('authorization')||'').replace(/^Basic /,''),'base64').toString()}catch{}
  if(!equal(credentials,'admin:'+env.MELI_VALIDATION_PASSWORD))return page('Acesso privado','<p>Use as credenciais administrativas deste teste.</p>',401,{'www-authenticate':'Basic realm="Curio validation", charset="UTF-8"'});
- if(req.method==='GET')return page('Validar Mercado Livre','<p>Este teste consulta sua conta e alguns recursos de leitura. Não modifica anúncios e não salva tokens.</p><form method="post"><button>Autorizar e testar</button></form>');
- if(req.headers.get('origin')!==ROOT)return page('Origem inválida','',403);
+ if(req.method==='GET'){
+  const csrf=randomBytes(32).toString('base64url');
+  return page('Validar Mercado Livre',`<p>Este teste consulta sua conta e alguns recursos de leitura. Não modifica anúncios e não salva tokens.</p><form method="post"><input type="hidden" name="csrf" value="${csrf}"><button>Autorizar e testar</button></form>`,200,{'set-cookie':cookie(seal({csrf,expires:Date.now()+600000},key),600)});
+ }
+ const origin=req.headers.get('origin');
+ if(origin&&origin!=='null'&&origin!==ROOT)return page('Origem inválida','<p>Abra novamente o painel no domínio principal.</p>',403);
+ try{
+  const raw=(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
+  const session=open(raw,key),form=await req.formData(),csrf=form.get('csrf');
+  if(!Number.isFinite(session.expires)||session.expires<Date.now()||typeof session.csrf!=='string'||typeof csrf!=='string'||!equal(session.csrf,csrf))throw Error();
+ }catch{return page('Sessão inválida','<p>Abra novamente o painel e clique em Autorizar e testar.</p>',403)}
  const state=randomBytes(32).toString('base64url'),verifier=randomBytes(32).toString('base64url');
  const auth=new URL('https://auth.mercadolivre.com.br/authorization');
  for(const [k,v] of Object.entries({response_type:'code',client_id:env.MELI_CLIENT_ID,redirect_uri:CALLBACK,state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'}))auth.searchParams.set(k,v);
