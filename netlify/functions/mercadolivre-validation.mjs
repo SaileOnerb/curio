@@ -3,8 +3,8 @@ const ROOT='https://curiocollection.com.br';
 const CALLBACK=ROOT+'/api/mercadolivre/callback';
 const COOKIE='__Host-curio-meli-validation';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const headers={'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-curio-meli-diagnostic':'2','referrer-policy':'no-referrer','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://auth.mercadolivre.com.br; frame-ancestors 'none'; base-uri 'none'"};
-function page(title,body,status=200,extra={}){return new Response(`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · CURIÓ</title><style>body{background:#0f0f10;color:#f5f5f5;font:16px system-ui;margin:0;padding:32px 20px}main{max-width:720px;margin:auto}section{background:#18181b;border:1px solid #2f2e36;border-radius:20px;padding:24px}button{background:#f5f5f5;color:#18181b;border:0;border-radius:12px;padding:14px 22px;font:inherit;cursor:pointer}li{margin:14px 0}p{line-height:1.6;color:#bdbdc3}code{overflow-wrap:anywhere}</style><main><h1>${esc(title)}</h1><section>${body}</section></main></html>`,{status,headers:{...headers,...extra}})}
+const headers={'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-curio-meli-diagnostic':'3','referrer-policy':'no-referrer','x-content-type-options':'nosniff','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; img-src https://http2.mlstatic.com; form-action 'self' https://auth.mercadolivre.com.br; frame-ancestors 'none'; base-uri 'none'"};
+function page(title,body,status=200,extra={}){return new Response(`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · CURIÓ</title><style>body{background:#0f0f10;color:#f5f5f5;font:16px system-ui;margin:0;padding:32px 20px}main{max-width:720px;margin:auto}section{background:#18181b;border:1px solid #2f2e36;border-radius:20px;padding:24px}input{box-sizing:border-box;width:100%;padding:12px;margin:8px 0 20px;border-radius:12px;border:1px solid #444;background:#232329;color:#f5f5f5;font:inherit}img{max-width:240px;max-height:280px;object-fit:contain;border-radius:12px}button{background:#f5f5f5;color:#18181b;border:0;border-radius:12px;padding:14px 22px;font:inherit;cursor:pointer}li{margin:14px 0}p{line-height:1.6;color:#bdbdc3}code{overflow-wrap:anywhere}</style><main><h1>${esc(title)}</h1><section>${body}</section></main></html>`,{status,headers:{...headers,...extra}})}
 function equal(a,b){return timingSafeEqual(createHash('sha256').update(a).digest(),createHash('sha256').update(b).digest())}
 function seal(data,key){const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key,iv);return Buffer.concat([iv,cipher.update(JSON.stringify(data)),cipher.final(),cipher.getAuthTag()]).toString('base64url')}
 function open(value,key){const buf=Buffer.from(value,'base64url');const d=createDecipheriv('aes-256-gcm',key,buf.subarray(0,12));d.setAuthTag(buf.subarray(-16));return JSON.parse(Buffer.concat([d.update(buf.subarray(12,-16)),d.final()]).toString())}
@@ -27,6 +27,14 @@ export default async function handler(req){
    if(!response.ok)return page('Autorização indisponível',`<p>A troca de autorização falhou (HTTP ${response.status}). Confira as credenciais, o endereço de retorno e o PKCE.</p>`,502,clear);
    const token=await response.json();if(typeof token.access_token!=='string')throw Error();
    const tests=[['Conta autorizada','/users/me',d=>Boolean(d.id)],['Busca de anúncios semelhantes','/sites/MLB/search?q=marvel%20legends&limit=3',d=>Array.isArray(d.results)],['Anúncio de outro vendedor','/items/MLB5399548670',d=>Boolean(d.id&&typeof d.price==='number')],['Busca no catálogo','/products/search?site_id=MLB&q=marvel%20legends&limit=3',d=>Array.isArray(d.results)]];
+   let preview='';
+   if(session.productId){
+    const product=await probe('/products/'+session.productId,token.access_token);
+    if(product.status===200&&typeof product.data?.name==='string'){
+     const picture=(product.data.pictures||[]).map(x=>x.url||x.secure_url).find(x=>{try{const u=new URL(x);return u.protocol==='https:'&&u.hostname==='http2.mlstatic.com'}catch{return false}});
+     preview=`<h2>Preenchimento de teste</h2><p>Produto exato: ${esc(session.productId)}. Confira a edição antes de usar.</p>${picture?`<img src="${esc(picture)}" alt="Foto do produto no catálogo">`:'<p>Foto HTTPS compatível não encontrada.</p>'}<label>Nome<input readonly value="${esc(product.data.name.slice(0,240))}"></label><label>Preço<input readonly value="" placeholder="Não fornecido pelo catálogo — preencher manualmente"></label><p>Este formulário é apenas uma prévia. Não salvou nada na sua Wishlist.</p>`;
+    }else preview=`<p>Produto ${esc(session.productId)}: preenchimento indisponível (HTTP ${product.status||'indisponível'}).</p>`;
+   }
    const results=[];for(const [name,path,valid] of tests){
     const result=await probe(path,token.access_token);
     let detail='';
@@ -43,7 +51,7 @@ export default async function handler(req){
     }
     results.push(`<li><strong>${esc(name)}</strong>: ${result.status===200&&result.data&&valid(result.data)?'resposta válida':result.status===200?'resposta sem os campos esperados':result.status?'HTTP '+result.status:'consulta indisponível'}${detail}</li>`);
    }
-   return page('Diagnóstico detalhado',`<ul>${results.join('')}</ul><p>Os tokens não foram salvos nem exibidos. Uma busca válida ainda exige verificar se os resultados representam anúncios comparáveis. Catálogo não equivale a histórico de vendas.</p>`,200,clear);
+   return page('Diagnóstico detalhado',`${preview}<ul>${results.join('')}</ul><p>Os tokens não foram salvos nem exibidos. Uma busca válida ainda exige verificar se os resultados representam anúncios comparáveis. Catálogo não equivale a histórico de vendas.</p>`,200,clear);
   }catch{return page('Validação interrompida','<p>A sessão expirou, é inválida ou o serviço não respondeu. Inicie uma nova tentativa pelo painel privado.</p>',400,clear)}
  }
  if(!['GET','POST'].includes(req.method))return page('Método inválido','',405);
@@ -51,18 +59,23 @@ export default async function handler(req){
  if(!equal(credentials,'admin:'+env.MELI_VALIDATION_PASSWORD))return page('Acesso privado','<p>Use as credenciais administrativas deste teste.</p>',401,{'www-authenticate':'Basic realm="Curio validation", charset="UTF-8"'});
  if(req.method==='GET'){
   const csrf=randomBytes(32).toString('base64url');
-  return page('Validar Mercado Livre',`<p>Este teste consulta sua conta e alguns recursos de leitura. Não modifica anúncios e não salva tokens.</p><form method="post"><input type="hidden" name="csrf" value="${csrf}"><button>Autorizar e testar</button></form>`,200,{'set-cookie':cookie(seal({csrf,expires:Date.now()+600000},key),600)});
+  return page('Validar Mercado Livre',`<p>Este teste consulta sua conta e alguns recursos de leitura. Não modifica anúncios e não salva tokens.</p><form method="post"><input type="hidden" name="csrf" value="${csrf}"><label>Link do produto de catálogo<input name="product" type="url" required value="https://www.mercadolivre.com.br/phoenix-green-version-110-marvel-comics-iron-studios/p/MLB50261663"></label><button>Autorizar e testar preenchimento</button></form>`,200,{'set-cookie':cookie(seal({csrf,expires:Date.now()+600000},key),600)});
  }
+ let productId;
  const origin=req.headers.get('origin');
  if(origin&&origin!=='null'&&origin!==ROOT)return page('Origem inválida','<p>Abra novamente o painel no domínio principal.</p>',403);
  try{
   const raw=(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
   const session=open(raw,key),form=await req.formData(),csrf=form.get('csrf');
+  const product=new URL(String(form.get('product')||''));
+  if(product.protocol!=='https:'||!['www.mercadolivre.com.br','mercadolivre.com.br'].includes(product.hostname))throw Error();
+  productId=product.pathname.match(/\/p\/(MLB[0-9]+)(?:\/|$)/)?.[1];
+  if(!productId)throw Error();
   if(!Number.isFinite(session.expires)||session.expires<Date.now()||typeof session.csrf!=='string'||typeof csrf!=='string'||!equal(session.csrf,csrf))throw Error();
- }catch{return page('Sessão inválida','<p>Abra novamente o painel e clique em Autorizar e testar.</p>',403)}
+ }catch{return page('Sessão inválida','<p>Abra novamente o painel e use um link completo de catálogo do Mercado Livre com /p/MLB seguido de números.</p>',403)}
  const state=randomBytes(32).toString('base64url'),verifier=randomBytes(32).toString('base64url');
  const auth=new URL('https://auth.mercadolivre.com.br/authorization');
  for(const [k,v] of Object.entries({response_type:'code',client_id:env.MELI_CLIENT_ID,redirect_uri:CALLBACK,state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'}))auth.searchParams.set(k,v);
- return new Response(null,{status:303,headers:{...headers,location:auth.href,'set-cookie':cookie(seal({state,verifier,expires:Date.now()+600000},key),600)}});
+ return new Response(null,{status:303,headers:{...headers,location:auth.href,'set-cookie':cookie(seal({state,verifier,productId,expires:Date.now()+600000},key),600)}});
 }
 export const config={path:['/api/mercadolivre','/api/mercadolivre/callback']};
