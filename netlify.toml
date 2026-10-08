@@ -1,0 +1,4 @@
+[build]
+  command = "mkdir -p online-dist/icons && cp index-online.html online-dist/index.html && cp online-data.js platform-swipe.js platform-ui.js platform-i18n.js platform-currency.js online-dist/ && cp icons/icon-192.svg icons/icon-512.svg icons/icon-maskable.svg icons/support-pix.jpg online-dist/icons/"
+  publish = "online-dist"
+  functions = "netlify/functions"

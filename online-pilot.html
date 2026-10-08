@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CURIÓ — piloto online</title>
+<style>
+:root{color-scheme:dark;font:16px system-ui,sans-serif;background:#0d131c;color:#edf3fa}
+*{box-sizing:border-box}body{max-width:1100px;margin:auto;padding:24px 16px 90px}
+h1{font-size:2rem;margin:.2rem 0}.eyebrow{color:#91d4b1;font-size:.78rem;letter-spacing:.15em;text-transform:uppercase}
+.muted{color:#aebdcb;line-height:1.5}a{color:#9bd8b9}section,.card{background:#182330;border:1px solid #344354;border-radius:16px;padding:18px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+label{display:block;margin:12px 0;color:#c9d6e2}input,textarea{display:block;width:100%;margin-top:6px;padding:11px 12px;background:#0e1824;color:white;border:1px solid #516176;border-radius:9px;font:inherit}
+button{font:inherit;padding:10px 15px;background:#8bd4ae;color:#102319;border:0;border-radius:9px;font-weight:700;cursor:pointer}
+button.secondary{background:#344454;color:white}button.danger{background:#5b3440;color:#ffe1e6}button:disabled{opacity:.45;cursor:wait}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.row{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.photo{width:90px;height:90px;object-fit:cover;border-radius:10px;background:#344454}.item{border-top:1px solid #344354;padding:14px 0}
+#status{min-height:24px}.error{color:#ffa7a7}.success{color:#96deb3}.hidden{display:none}
+small{color:#aebdcb}
+</style>
+<header><div class="eyebrow">Ambiente de teste · Supabase</div><h1>CURIÓ online</h1>
+<p class="muted">Piloto separado do aplicativo atual. Ele não lê, importa ou apaga os dados guardados no navegador do CURIÓ 2.7.8. Use contas e figuras de teste.</p></header>
+<section id="authBox">
+  <h2>Entrar</h2>
+  <div class="grid">
+    <label>Chave publicável do projeto <input id="key" autocomplete="off" spellcheck="false" placeholder="sb_publishable_..."></label>
+    <label>E-mail <input id="email" type="email" autocomplete="username"></label>
+    <label>Senha <input id="password" type="password" autocomplete="current-password"></label>
+  </div>
+  <button id="login">Entrar na conta de teste</button>
+</section>
+<div id="app" class="hidden">
+  <div class="row"><p id="who"></p><button id="logout" class="secondary">Sair</button></div>
+  <div class="actions"><button id="refresh" class="secondary">Atualizar dados do servidor</button></div>
+  <div class="grid">
+    <section>
+      <h2>Figuras <small id="figureCount"></small></h2>
+      <label>Nome <input id="figureName" maxlength="160" placeholder="Ex.: Demolidor"></label>
+      <label>Fabricante <input id="figureMaker" maxlength="120" placeholder="Ex.: Hasbro"></label>
+      <label>Preço pago (R$) <input id="figurePrice" type="number" min="0" step=".01" placeholder="0,00"></label>
+      <label>Foto de capa (opcional) <input id="figurePhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
+      <button id="addFigure">Salvar figura de teste</button>
+      <div id="figures"></div>
+    </section>
+    <div>
+      <section>
+        <h2>Coleções <small id="collectionCount"></small></h2>
+        <label>Nome <input id="collectionName" maxlength="120" placeholder="Ex.: Marvel"></label>
+        <button id="addCollection">Criar coleção de teste</button>
+        <div id="collections"></div>
+      </section>
+      <section>
+        <h2>Wishlist <small id="wishlistCount"></small></h2>
+        <label>Nome <input id="wishName" maxlength="160" placeholder="Ex.: Wolverine"></label>
+        <label>Link da loja (opcional) <input id="wishUrl" type="url" placeholder="https://..."></label>
+        <button id="addWish">Salvar desejo de teste</button>
+        <div id="wishlist"></div>
+      </section>
+    </div>
+  </div>
+</div>
+<p id="status" role="status" aria-live="polite"></p>
+<script>
+(() => {
+  'use strict';
+  const BASE='https://xyuqdpenhnlwnplisxjh.supabase.co';
+  const BUCKET='figure-photos';
+  const $=id=>document.getElementById(id);
+  let key='',user=null,token='',items={figures:[],collections:[],wishlist:[]};
+  let photoUrls=[];
+  const status=(message,error=false)=>{const el=$('status');el.textContent=message;el.className=error?'error':'success'};
+  function busy(button,fn){button.disabled=true;return Promise.resolve().then(fn).catch(e=>status(e.message,true)).finally(()=>button.disabled=false)}
+  async function api(url,method='GET',body=null,contentType='application/json'){
+    const headers={apikey:key,Authorization:'Bearer '+token};
+    if(body!==null&&contentType) headers['Content-Type']=contentType;
+    if(method==='POST' && url.startsWith('/rest/v1/')) headers.Prefer='return=representation';
+    const r=await fetch(BASE+url,{method,headers,body:body===null?undefined:contentType==='application/json'?JSON.stringify(body):body,cache:'no-store'});
+    if(!r.ok){let detail='';try{const j=await r.json();detail=j.message||j.error||j.msg||''}catch{}
+      throw Error('HTTP '+r.status+(detail?': '+detail:''));}
+    if(r.status===204)return null;
+    const type=r.headers.get('content-type')||'';
+    if(type.includes('application/json')){const text=await r.text();return text?JSON.parse(text):null}
+    return r.blob();
+  }
+  function field(id){return $(id).value.trim()}
+  function div(cls){const e=document.createElement('div');e.className=cls;return e}
+  function button(label,cls,fn){const b=document.createElement('button');b.textContent=label;b.className=cls;b.onclick=()=>busy(b,fn);return b}
+  function clearPhotos(){photoUrls.forEach(URL.revokeObjectURL);photoUrls=[]}
+  async function load(){
+    const session=token;
+    status('Carregando dados da conta…');
+    const [figures,collections,wishlist]=await Promise.all(
+      ['figures','collections','wishlist'].map(t=>api('/rest/v1/'+t+'?select=*&order=created_at.desc')));
+    if(token!==session)return;
+    items={figures,collections,wishlist};
+    render();status('Dados atualizados do servidor.');
+  }
+  async function cover(path,img){
+    try{const blob=await api('/storage/v1/object/authenticated/'+BUCKET+'/'+path);
+      const url=URL.createObjectURL(blob);photoUrls.push(url);img.src=url}
+    catch{img.alt='Foto indisponível'}
+  }
+  function render(){
+    clearPhotos();
+    $('figureCount').textContent='('+items.figures.length+')';
+    $('collectionCount').textContent='('+items.collections.length+')';
+    $('wishlistCount').textContent='('+items.wishlist.length+')';
+    for(const name of ['figures','collections','wishlist']) $(name).replaceChildren();
+    for(const f of items.figures){
+      const row=div('item row'),info=div(''),title=document.createElement('b');
+      title.textContent=f.name;info.append(title);
+      const detail=document.createElement('p');detail.className='muted';
+      detail.textContent=[f.data?.maker,f.data?.price!=null?Number(f.data.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):''].filter(Boolean).join(' · ');
+      info.append(detail);
+      const actions=div('actions');
+      actions.append(button('Renomear','secondary',async()=>{
+        const name=prompt('Novo nome da figura:',f.name)?.trim();
+        if(!name||name===f.name)return;
+        await api('/rest/v1/figures?id=eq.'+encodeURIComponent(f.id),'PATCH',{name});
+        await load();
+      }),button('Excluir','danger',async()=>{
+        if(!confirm('Excluir esta figura de teste e a foto associada?'))return;
+        const photos=await api('/rest/v1/figure_photos?select=storage_path&figure_id=eq.'+encodeURIComponent(f.id));
+        // The database is deleted only after Storage confirms all associated files were removed.
+        for(const p of photos){
+          await api('/storage/v1/object/'+BUCKET,'DELETE',{prefixes:[p.storage_path]});
+        }
+        await api('/rest/v1/figures?id=eq.'+encodeURIComponent(f.id),'DELETE');
+        await load();
+      }));
+      info.append(actions);row.append(info);
+      $('figures').append(row);
+    }
+    for(const c of items.collections){
+      const row=div('item row'),name=document.createElement('b');name.textContent=c.name;
+      row.append(name,button('Excluir','danger',async()=>{
+        if(!confirm('Excluir a coleção de teste "'+c.name+'"?'))return;
+        await api('/rest/v1/collections?id=eq.'+encodeURIComponent(c.id),'DELETE');await load();
+      }));$('collections').append(row);
+    }
+    for(const w of items.wishlist){
+      const row=div('item row'),name=document.createElement('b');name.textContent=w.data?.name||'Sem nome';
+      row.append(name,button('Excluir','danger',async()=>{
+        if(!confirm('Excluir este desejo de teste?'))return;
+        await api('/rest/v1/wishlist?id=eq.'+encodeURIComponent(w.id),'DELETE');await load();
+      }));$('wishlist').append(row);
+    }
+    const figuresAtRender=items.figures, session=token;
+    api('/rest/v1/figure_photos?select=figure_id,storage_path&kind=eq.cover').then(photos=>{
+      if(items.figures!==figuresAtRender || token!==session)return;
+      for(const p of photos){
+        const row=[...$('figures').children].find(x=>x.dataset.figureId===p.figure_id);
+        if(!row)continue;
+        const img=document.createElement('img');img.className='photo';img.alt='Capa';row.append(img);cover(p.storage_path,img);
+      }
+    }).catch(e=>status('Fotos: '+e.message,true));
+    [...$('figures').children].forEach((row,i)=>row.dataset.figureId=items.figures[i].id);
+  }
+  $('login').onclick=()=>busy($('login'),async()=>{
+    const proposedKey=field('key');
+    if(!proposedKey.startsWith('sb_publishable_'))throw Error('Use apenas a chave publicável sb_publishable_…');
+    const email=field('email'),password=$('password').value;
+    if(!email||!password)throw Error('Preencha e-mail e senha.');
+    key=proposedKey;
+    const r=await fetch(BASE+'/auth/v1/token?grant_type=password',{
+      method:'POST',headers:{apikey:key,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password}),cache:'no-store'});
+    $('password').value='';
+    if(!r.ok)throw Error('Login recusado (HTTP '+r.status+'). Confira senha e confirmação do e-mail.');
+    const data=await r.json();
+    if(!data.access_token||!data.user?.id)throw Error('Resposta de login incompleta.');
+    token=data.access_token;user=data.user;
+    $('who').textContent='Conta: '+(user.email||email);
+    $('authBox').classList.add('hidden');$('app').classList.remove('hidden');
+    try{await load()}catch(e){status('Entrou, mas não carregou os dados: '+e.message,true)}
+  });
+  $('logout').onclick=()=>{
+    key=token='';user=null;items={figures:[],collections:[],wishlist:[]};clearPhotos();
+    $('key').value='';$('password').value='';$('app').classList.add('hidden');$('authBox').classList.remove('hidden');
+    status('Sessão encerrada nesta página.');
+  };
+  $('refresh').onclick=()=>busy($('refresh'),load);
+  $('addFigure').onclick=()=>busy($('addFigure'),async()=>{
+    const name=field('figureName'),maker=field('figureMaker'),price=Number(field('figurePrice')||0),file=$('figurePhoto').files[0];
+    if(!name)throw Error('Dê um nome à figura.');if(!Number.isFinite(price)||price<0)throw Error('Preço inválido.');
+    if(file&&(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024))
+      throw Error('A foto deve ser JPEG, PNG ou WebP de até 10 MB.');
+    const created=await api('/rest/v1/figures?select=id','POST',
+      {owner_id:user.id,name,data:{maker,price,source:'online-pilot'}});
+    const id=created?.[0]?.id;
+    if(!id)throw Error('Figura criada, mas sem ID retornado. Atualize antes de tentar novamente.');
+    if(file){
+      const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type];
+      const path=user.id+'/'+id+'/cover.'+ext;
+      let uploaded=false;
+      try{
+        await api('/storage/v1/object/'+BUCKET+'/'+path,'POST',file,file.type);
+        uploaded=true;
+        await api('/rest/v1/figure_photos','POST',
+          {owner_id:user.id,figure_id:id,kind:'cover',position:0,storage_path:path});
+      }catch(e){
+        if(uploaded)try{await api('/storage/v1/object/'+BUCKET,'DELETE',{prefixes:[path]})}catch{}
+        await load();status('Figura criada, mas foto falhou: '+e.message+'. Confira a lista antes de tentar novamente.',true);return
+      }
+    }
+    $('figureName').value=$('figureMaker').value=$('figurePrice').value=$('figurePhoto').value='';
+    await load();
+  });
+  $('addCollection').onclick=()=>busy($('addCollection'),async()=>{
+    const name=field('collectionName');if(!name)throw Error('Dê um nome à coleção.');
+    await api('/rest/v1/collections','POST',{owner_id:user.id,name});
+    $('collectionName').value='';await load();
+  });
+  $('addWish').onclick=()=>busy($('addWish'),async()=>{
+    const name=field('wishName'),url=field('wishUrl');
+    if(!name)throw Error('Dê um nome ao desejo.');
+    if(url&&!/^https?:\/\//i.test(url))throw Error('O link precisa começar com https:// ou http://.');
+    await api('/rest/v1/wishlist','POST',{owner_id:user.id,data:{name,url,source:'online-pilot'}});
+    $('wishName').value=$('wishUrl').value='';await load();
+  });
+})();
+</script>
+</html>
