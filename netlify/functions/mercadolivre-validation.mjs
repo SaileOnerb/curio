@@ -1,3 +1,4 @@
+import {saveMeliConnection} from './lib/meli-connection.mjs';
 import {randomBytes,createHash,timingSafeEqual,createCipheriv,createDecipheriv} from 'node:crypto';
 const ROOT='https://curiocollection.com.br';
 const CALLBACK=ROOT+'/api/mercadolivre/callback';
@@ -26,6 +27,8 @@ export default async function handler(req){
    const response=await fetch('https://api.mercadolibre.com/oauth/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded',accept:'application/json'},body:new URLSearchParams({grant_type:'authorization_code',client_id:env.MELI_CLIENT_ID,client_secret:env.MELI_CLIENT_SECRET,code,redirect_uri:CALLBACK,code_verifier:session.verifier}),signal:AbortSignal.timeout(10000),redirect:'error'});
    if(!response.ok)return page('Autorização indisponível',`<p>A troca de autorização falhou (HTTP ${response.status}). Confira as credenciais, o endereço de retorno e o PKCE.</p>`,502,clear);
    const token=await response.json();if(typeof token.access_token!=='string')throw Error();
+   let connectionNotice='';
+   if(session.connect){try{await saveMeliConnection(token);connectionNotice='<p><strong>Conexão salva para a Wishlist.</strong> A autorização será renovada pelo servidor.</p>'}catch{connectionNotice='<p><strong>Conexão não salva.</strong> Confira a migração SQL e SUPABASE_SECRET_KEY no Netlify. O teste abaixo ainda funciona sem salvar.</p>'}}
    const tests=[['Conta autorizada','/users/me',d=>Boolean(d.id)],['Busca de anúncios semelhantes','/sites/MLB/search?q=marvel%20legends&limit=3',d=>Array.isArray(d.results)],['Anúncio de outro vendedor','/items/MLB5399548670',d=>Boolean(d.id&&typeof d.price==='number')],['Busca no catálogo','/products/search?site_id=MLB&q=marvel%20legends&limit=3',d=>Array.isArray(d.results)]];
    let preview='';
    if(session.productId){
@@ -51,7 +54,7 @@ export default async function handler(req){
     }
     results.push(`<li><strong>${esc(name)}</strong>: ${result.status===200&&result.data&&valid(result.data)?'resposta válida':result.status===200?'resposta sem os campos esperados':result.status?'HTTP '+result.status:'consulta indisponível'}${detail}</li>`);
    }
-   return page('Diagnóstico detalhado',`${preview}<ul>${results.join('')}</ul><p>Os tokens não foram salvos nem exibidos. Uma busca válida ainda exige verificar se os resultados representam anúncios comparáveis. Catálogo não equivale a histórico de vendas.</p>`,200,clear);
+   return page('Diagnóstico detalhado',`${connectionNotice}${preview}<ul>${results.join('')}</ul><p>Os tokens não são exibidos. Só são armazenados cifrados quando você marca a opção de conectar a Wishlist. Uma busca válida ainda exige verificar se os resultados representam anúncios comparáveis. Catálogo não equivale a histórico de vendas.</p>`,200,clear);
   }catch{return page('Validação interrompida','<p>A sessão expirou, é inválida ou o serviço não respondeu. Inicie uma nova tentativa pelo painel privado.</p>',400,clear)}
  }
  if(!['GET','POST'].includes(req.method))return page('Método inválido','',405);
@@ -59,14 +62,15 @@ export default async function handler(req){
  if(!equal(credentials,'admin:'+env.MELI_VALIDATION_PASSWORD))return page('Acesso privado','<p>Use as credenciais administrativas deste teste.</p>',401,{'www-authenticate':'Basic realm="Curio validation", charset="UTF-8"'});
  if(req.method==='GET'){
   const csrf=randomBytes(32).toString('base64url');
-  return page('Validar Mercado Livre',`<p>Este teste consulta sua conta e alguns recursos de leitura. Não modifica anúncios e não salva tokens.</p><form method="post"><input type="hidden" name="csrf" value="${csrf}"><label>Link do produto de catálogo<input name="product" type="url" required value="https://www.mercadolivre.com.br/phoenix-green-version-110-marvel-comics-iron-studios/p/MLB50261663"></label><button>Autorizar e testar preenchimento</button></form>`,200,{'set-cookie':cookie(seal({csrf,expires:Date.now()+600000},key),600)});
+  return page('Validar Mercado Livre',`<p>Este teste consulta sua conta e alguns recursos de leitura. Não modifica anúncios. Só salva a autorização se você marcar a conexão da Wishlist.</p><form method="post"><input type="hidden" name="csrf" value="${csrf}"><label>Link do produto de catálogo<input name="product" type="url" required value="https://www.mercadolivre.com.br/phoenix-green-version-110-marvel-comics-iron-studios/p/MLB50261663"></label><label><input type="checkbox" name="connect" value="yes" style="width:auto;margin-right:8px">Salvar conexão para a Wishlist do CURIÓ</label><p>A conexão fornece somente dados do catálogo. Não modifica anúncios nem permite acesso à sua conta pelos usuários.</p><button>Autorizar e testar preenchimento</button></form>`,200,{'set-cookie':cookie(seal({csrf,expires:Date.now()+600000},key),600)});
  }
- let productId;
+ let productId,connect=false;
  const origin=req.headers.get('origin');
  if(origin&&origin!=='null'&&origin!==ROOT)return page('Origem inválida','<p>Abra novamente o painel no domínio principal.</p>',403);
  try{
   const raw=(req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
   const session=open(raw,key),form=await req.formData(),csrf=form.get('csrf');
+  connect=form.get('connect')==='yes';
   const product=new URL(String(form.get('product')||''));
   if(product.protocol!=='https:'||!['www.mercadolivre.com.br','mercadolivre.com.br'].includes(product.hostname))throw Error();
   productId=product.pathname.match(/\/p\/(MLB[0-9]+)(?:\/|$)/)?.[1];
@@ -76,6 +80,6 @@ export default async function handler(req){
  const state=randomBytes(32).toString('base64url'),verifier=randomBytes(32).toString('base64url');
  const auth=new URL('https://auth.mercadolivre.com.br/authorization');
  for(const [k,v] of Object.entries({response_type:'code',client_id:env.MELI_CLIENT_ID,redirect_uri:CALLBACK,state,code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256'}))auth.searchParams.set(k,v);
- return new Response(null,{status:303,headers:{...headers,location:auth.href,'set-cookie':cookie(seal({state,verifier,productId,expires:Date.now()+600000},key),600)}});
+ return new Response(null,{status:303,headers:{...headers,location:auth.href,'set-cookie':cookie(seal({state,verifier,productId,connect,expires:Date.now()+600000},key),600)}});
 }
 export const config={path:['/api/mercadolivre','/api/mercadolivre/callback']};

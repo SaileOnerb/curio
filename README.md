@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão atual do produto: 4.3.2** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
+**Versão atual do produto: 4.4.0** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
 
 **[Abrir o CURIÓ](https://curiocollection.com.br)** · [Preview da PR #9](https://deploy-preview-9--curiovault.netlify.app)
 
@@ -380,3 +380,11 @@ Corrige ciclo de atualização entre tradução e seletores visuais que podia tr
 ## 4.3.2
 
 Oculta ferramentas da fase offline e atualizador legado por seletores fixos na interface online. Mantém os controles de backup e exclusão da conta online.
+
+## 4.4.0
+
+- Wishlist: nome e foto por link exato de produto de catálogo Mercado Livre, após ativação administrativa. Preço permanece manual; anúncios externos continuam sem acesso validado.
+- Conexão cifrada no servidor, renovação com proteção contra concorrência e tabela inacessível aos usuários.
+- Endpoint de análise compatível com o Android. Base web/Android sincronizada; APK exige compilação.
+- Configuração: [Mercado Livre na Wishlist](docs/mercadolivre-wishlist.md).
+- Testes técnicos independem do lote; contagem de updates de usuários reiniciada em 0/3 após esta publicação.

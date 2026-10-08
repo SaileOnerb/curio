@@ -1,3 +1,4 @@
+import {meliProductId,meliCatalogPreview} from './lib/meli-connection.mjs';
 // Small, bounded preview for supported stores. Never fetch arbitrary user hosts.
 const stores=['mercadolivre.com.br','mercadolivre.com','amazon.com.br','amazon.com','aliexpress.com','shopee.com.br','shopee.com'];
 const safeHost=host=>stores.some(domain=>host===domain||host.endsWith('.'+domain));
@@ -19,13 +20,14 @@ async function storePage(original){
  }
  return {page:null,url};
 }
-export default async function handler(req){
+async function handler(req){
  if(req.method!=='POST')return response({error:'Método inválido.'},405);
  const auth=req.headers.get('authorization'),key=req.headers.get('apikey');
  if(!auth?.startsWith('Bearer ')||!key?.startsWith('sb_publishable_'))return response({error:'Entre na conta para analisar links.'},401);
  try{const check=await fetch('https://xyuqdpenhnlwnplisxjh.supabase.co/auth/v1/user',{headers:{authorization:auth,apikey:key},signal:AbortSignal.timeout(4000)});if(!check.ok)return response({error:'Sessão expirada. Entre novamente.'},401)}catch{return response({error:'Não foi possível verificar a conta agora.'},503)}
  let supplied;try{supplied=(await req.json()).url}catch{return response({error:'Link inválido.'},400)}
  let url;try{url=new URL(supplied);if(url.protocol!=='https:'||!safeHost(url.hostname.toLowerCase())||url.username||url.password||url.port)throw Error()}catch{return response({error:'Esta loja ainda não é compatível. Preencha os dados manualmente.'},400)}
+ if(meliProductId(url)){try{return response(await meliCatalogPreview(url))}catch{return response({error:'Consulta ao catálogo indisponível agora. Preencha os dados manualmente ou tente novamente mais tarde.'},503)}}
  const fallback=()=>{const name=suggestedName(url);return name?response({name,image:'',price:null,store:url.hostname,partial:true}):response({error:'A loja bloqueou a leitura deste produto. Preencha nome, preço e foto manualmente.'},422)};
  try{
   const fetched=await storePage(url);url=fetched.url;const page=fetched.page;
@@ -43,5 +45,12 @@ export default async function handler(req){
   const price=!partial&&(currency==='BRL'||!currency&&url.hostname.endsWith('.com.br'))&&rawPrice!==''&&rawPrice!=null&&Number.isFinite(Number(rawPrice))?Number(rawPrice):null;
   return response({name,image,price,store:url.hostname,partial:partial||!image||price===null});
  }catch{return fallback()}
+}
+export default async function preview(req){
+ const origin=req.headers.get('origin'),native=['https://localhost','http://localhost','capacitor://localhost'].includes(origin);
+ if(req.method==='OPTIONS')return new Response(null,{status:native?204:403,headers:native?{'access-control-allow-origin':origin,'access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'authorization, apikey, content-type',vary:'Origin'}:{}});
+ const result=await handler(req);
+ if(native){result.headers.set('access-control-allow-origin',origin);result.headers.set('vary','Origin')}
+ return result;
 }
 export const config={path:'/api/product-preview'};
