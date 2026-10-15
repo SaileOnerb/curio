@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão atual do produto: 4.4.1** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
+**Versão atual do produto: 4.5.0** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
 
 **[Abrir o CURIÓ](https://curiocollection.com.br)** · [Preview da PR #9](https://deploy-preview-9--curiovault.netlify.app)
 
@@ -394,3 +394,13 @@ Oculta ferramentas da fase offline e atualizador legado por seletores fixos na i
 - Campo manual de preço ocultado no cadastro e na edição da Wishlist até a integração automática ser validada. Valores existentes preservados.
 - Preço pago e valor estimado das figuras continuam disponíveis.
 - Interface Android sincronizada; versionCode 9. Publicação antecipada autorizada; contagem reiniciada em 0/3.
+
+## 4.5.0
+
+- Exclusão definitiva da própria conta em Configurações, ao lado de apagar dados: confirmação com senha e frase EXCLUIR CONTA. Remoção dos arquivos antes do login e cascata dos registros associados.
+- Página externa account-deletion.html com instruções e alternativa de suporte para perda de acesso.
+- Apoio com Ver PayPal, e-mail do destinatário e botão de copiar, preservando Ver Pix.
+- Contato atualizado para support@curiocollection.com.br. Recebimento, encaminhamento ao Gmail e envio pelo endereço de suporte confirmados pelo responsável.
+- Android sincronizado, versionCode 10; configuração de assinatura release e workflow manual de AAB preparado. Dependem da chave de upload e da conta Play Console. Nenhum AAB assinado gerado neste ambiente.
+- Política de privacidade permanece em rascunho; revisão de retenção e Data safety pendentes. Guia: docs/play-store-preparation.md.
+- Teste real da exclusão será realizado pelo responsável em conta descartável. Publicação do lote autorizada; contagem reiniciada em 0/3.
