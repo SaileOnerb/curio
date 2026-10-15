@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão atual do produto: 4.5.1** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
+**Versão atual do produto: 4.5.2** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
 
 **[Abrir o CURIÓ](https://curiocollection.com.br)** · [Preview da PR #9](https://deploy-preview-9--curiovault.netlify.app)
 
@@ -412,3 +412,9 @@ Política de Privacidade versão 1.0 concluída em privacy.html e vinculada na t
 Declaração da Play Console preparada em [docs/play-data-safety.md](docs/play-data-safety.md): respostas gerais, tipos de dados e pendências de auditoria dos provedores. Preparação documental, sem nova atualização funcional nem envio à Google.
 
 Publicação antecipada de todas as pendências autorizada em 15/10/2026. Android versionCode 11; contagem reiniciada em 0/3. Política pública em /privacy.html. Guia Data safety preparado, não enviado à Google.
+
+## 4.5.2
+
+Seções reorganizadas; Ajuda separada do rodapé legal, Política de Privacidade no final, exclusão concentrada no Nulificador Total sem link redundante. Controles legados fora da aba visível. Botões e campos alinhados para desktop/mobile. Android sincronizado. Verificação visual automatizada indisponível no ambiente por ausência do Chromium; validação de sintaxe e estrutura concluída.
+
+Publicação antecipada autorizada. Android versionCode 12; contagem reiniciada em 0/3.
