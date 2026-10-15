@@ -1,6 +1,6 @@
 # CURIÓ — Personal Collection
 
-**Versão atual do produto: 4.5.0** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
+**Versão atual do produto: 4.5.1** · Catálogo pessoal de action figures para computador e celular, com site online e aplicativo Android compartilhando a mesma conta e coleção.
 
 **[Abrir o CURIÓ](https://curiocollection.com.br)** · [Preview da PR #9](https://deploy-preview-9--curiovault.netlify.app)
 
@@ -402,5 +402,13 @@ Oculta ferramentas da fase offline e atualizador legado por seletores fixos na i
 - Apoio com Ver PayPal, e-mail do destinatário e botão de copiar, preservando Ver Pix.
 - Contato atualizado para support@curiocollection.com.br. Recebimento, encaminhamento ao Gmail e envio pelo endereço de suporte confirmados pelo responsável.
 - Android sincronizado, versionCode 10; configuração de assinatura release e workflow manual de AAB preparado. Dependem da chave de upload e da conta Play Console. Nenhum AAB assinado gerado neste ambiente.
-- Política de privacidade permanece em rascunho; revisão de retenção e Data safety pendentes. Guia: docs/play-store-preparation.md.
+- Política de privacidade finalizada na versão 4.5.1; conferência de retenção dos provedores e envio de Data safety pendentes. Guia: docs/play-store-preparation.md.
 - Teste real da exclusão será realizado pelo responsável em conta descartável. Publicação do lote autorizada; contagem reiniciada em 0/3.
+
+## 4.5.1
+
+Política de Privacidade versão 1.0 concluída em privacy.html e vinculada na tela de acesso, Configurações e página de exclusão. Android sincronizado. Exclusão real de conta validada pelo responsável. Data safety e conferência dos prazos de infraestrutura permanecem na preparação para a loja.
+
+Declaração da Play Console preparada em [docs/play-data-safety.md](docs/play-data-safety.md): respostas gerais, tipos de dados e pendências de auditoria dos provedores. Preparação documental, sem nova atualização funcional nem envio à Google.
+
+Publicação antecipada de todas as pendências autorizada em 15/10/2026. Android versionCode 11; contagem reiniciada em 0/3. Política pública em /privacy.html. Guia Data safety preparado, não enviado à Google.

@@ -1,15 +1,11 @@
-# Política de privacidade — rascunho para revisão
+# Política de privacidade
 
-Não publicar como política final nem declarar conformidade antes de validar os pontos abaixo.
+A versão 1.0 foi concluída em 15/10/2026 no arquivo privacy.html. Este arquivo substitui o rascunho anterior como referência interna. Publicada com o lote 4.5.1.
 
-Responsável: confirmar nome público do desenvolvedor compatível com a ficha da loja. Contato atual: support@curiocollection.com.br.
+A política identifica o responsável como Breno Elias, o projeto CURIÓ e o contato support@curiocollection.com.br. Deve ser alinhada ao nome informado no Play Console.
 
-Dados identificados no código: e-mail de autenticação, perfil (nome/foto), dados da coleção, fotos, Wishlist e links, valores pagos/estimados, metas e preferências. Tokens de sessão permanecem no dispositivo para restaurar o login. Senhas são tratadas pelo Supabase Auth. Arquivos exportados são baixados pelo usuário.
+Exclusão ponta a ponta validada pelo responsável em conta descartável em 15/10/2026: senha/frase, login, registros, fotos e isolamento de outra conta.
 
-Finalidades: autenticar, sincronizar a coleção entre dispositivos, exibir fotos, organizar valores e analisar links solicitados pelo usuário.
+Antes da submissão à loja, preencher Data safety com dados reais, inclusive dados técnicos dos provedores. Conferir nas contas contratadas os prazos específicos de logs/backups e mecanismos de transferência internacional; a política não inventa períodos numéricos nem certifica conformidade jurídica. A política descreve as retenções operacionais como tais e fornece contato para esclarecimento.
 
-Provedores identificados: Supabase (Auth/banco/Storage), Netlify (site/funções), Resend (e-mails transacionais) e Mercado Livre (consulta de catálogo). Imagens externas podem ser carregadas dos servidores das lojas. Validar fluxos, regiões de processamento, logs, subprocessadores e transferências internacionais nas contas contratadas.
-
-Retenção: dados ativos enquanto a conta existir. Solicitação de exclusão por página pública e link no app. Confirmar prazo operacional de atendimento, expiração de backups e logs de cada provedor, eventuais exceções legais e como eliminar os dados de produção e Auth. Não prometer apagamento instantâneo de backups.
-
-Revisar: dados coletados automaticamente por SDKs/servidores, finalidade e retenção de logs, eventual telemetria, compartilhamento para afiliados, direitos e contato, uso por menores, segurança, alterações da política e data de vigência. A declaração Data safety deve refletir o comportamento real, inclusive serviços terceirizados.
+Fontes consultadas: https://www.gov.br/anpd/pt-br/assuntos/titular-de-dados/direito-dos-titulares ; https://support.google.com/googleplay/android-developer/answer/10144311?hl=pt-BR

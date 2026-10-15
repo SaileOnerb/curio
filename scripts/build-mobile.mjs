@@ -26,3 +26,6 @@ console.log('Interface Android preparada em mobile-dist.');
 await cp(new URL('platform-i18n.js',root),new URL('platform-i18n.js',output));
 
 await cp(new URL('platform-currency.js',root),new URL('platform-currency.js',output));
+
+await cp(new URL('privacy.html',root),new URL('privacy.html',output));
+await cp(new URL('account-deletion.html',root),new URL('account-deletion.html',output));
